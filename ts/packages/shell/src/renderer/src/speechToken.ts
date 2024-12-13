@@ -9,7 +9,7 @@ let speechToken: SpeechToken | undefined;
 export async function getSpeechToken(): Promise<SpeechToken | undefined> {
     if (getClientAPI() != undefined) {
         if (speechToken === undefined || speechToken.expire <= Date.now()) {
-            speechToken = await getClientAPI().getSpeechToken();
+            // speechToken = await getClientAPI().getSpeechToken();
         }
     }
     return speechToken;

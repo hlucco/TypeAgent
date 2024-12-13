@@ -141,7 +141,7 @@ export interface ClientAPI {
         ) => void,
     ): void;
     sendProposedAction(proposeActionId: number, replacement?: unknown): void;
-    getSpeechToken: () => Promise<SpeechToken | undefined>;
+    // getSpeechToken: () => Promise<SpeechToken | undefined>;
     getLocalWhisperStatus: () => Promise<boolean | undefined>;
     onSendInputText(
         callback: (e: Electron.IpcRendererEvent, message: string) => void,

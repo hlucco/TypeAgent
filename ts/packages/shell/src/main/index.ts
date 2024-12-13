@@ -8,7 +8,6 @@ import {
     shell,
     BrowserWindow,
     globalShortcut,
-    dialog,
     DevicePermissionHandlerHandlerDetails,
     WebContents,
     BrowserView,
@@ -33,7 +32,7 @@ import { AppAgentEvent, DisplayAppendMode } from "@typeagent/agent-sdk";
 import { shellAgentProvider } from "./agent.js";
 import { BrowserAgentIpc } from "./browserIpc.js";
 import { WebSocketMessage } from "common-utils";
-import { AzureSpeech } from "./azureSpeech.js";
+// import { AzureSpeech } from "./azureSpeech.js";
 import { auth } from "aiclient";
 import {
     closeLocalWhipser,
@@ -400,10 +399,10 @@ function setupDevicePermissions(mainWindow: BrowserWindow) {
     );
 }
 
+/*
 let speechToken:
     | { token: string; expire: number; region: string; endpoint: string }
     | undefined;
-
 async function getSpeechToken() {
     if (speechToken === undefined || speechToken.expire <= Date.now()) {
         debugShell("Getting speech token");
@@ -416,8 +415,9 @@ async function getSpeechToken() {
         };
     }
     return speechToken;
-}
+}*/
 
+/*
 async function triggerRecognitionOnce() {
     const speechToken = await getSpeechToken();
     const useLocalWhisper = isLocalWhisperEnabled();
@@ -427,7 +427,7 @@ async function triggerRecognitionOnce() {
         speechToken,
         useLocalWhisper,
     );
-}
+} */
 
 function updateDisplay(message: IAgentMessage, mode?: DisplayAppendMode) {
     // Ignore message without requestId
@@ -586,6 +586,7 @@ async function setDynamicDisplay(
     );
 }
 
+/*
 async function initializeSpeech() {
     const key = process.env["SPEECH_SDK_KEY"];
     const region = process.env["SPEECH_SDK_REGION"];
@@ -621,7 +622,7 @@ async function initializeSpeech() {
     } else {
         debugShellError("Global shortcut registration failed");
     }
-}
+}*/
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -750,7 +751,7 @@ async function initialize() {
         });
     });
 
-    await initializeSpeech();
+    // await initializeSpeech();
     ipcMain.handle("get-localWhisper-status", async () => {
         return isLocalWhisperEnabled();
     });

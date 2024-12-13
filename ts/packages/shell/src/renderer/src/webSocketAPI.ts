@@ -152,12 +152,12 @@ export const webapi: ClientAPI = {
             }),
         );
     },
-    getSpeechToken: () => {
-        return new Promise<SpeechToken | undefined>(async (resolve) => {
-            // We are not auth in this case and instead will rely on the device to provide speech reco
-            resolve(undefined);
-        });
-    },
+    // getSpeechToken: () => {
+    //     return new Promise<SpeechToken | undefined>(async (resolve) => {
+    //         // We are not auth in this case and instead will rely on the device to provide speech reco
+    //         resolve(undefined);
+    //     });
+    // },
     getLocalWhisperStatus: () => {
         // local whisper not supported on mobile
         return new Promise<boolean | undefined>((resolve) => {

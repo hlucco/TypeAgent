@@ -123,9 +123,9 @@ const api: ClientAPI = {
     sendProposedAction: (proposeActionId: number, replacement?: unknown) => {
         ipcRenderer.send("proposeActionResponse", proposeActionId, replacement);
     },
-    getSpeechToken: () => {
-        return ipcRenderer.invoke("get-speech-token");
-    },
+    // getSpeechToken: () => {
+    //     return ipcRenderer.invoke("get-speech-token");
+    //  },
     getLocalWhisperStatus: () => {
         return ipcRenderer.invoke("get-localWhisper-status");
     },

@@ -49,6 +49,7 @@
     "image-agent": "workspace:*",
     "knowledge-processor": "workspace:*",
     "list-agent": "workspace:*",
+    "highspot-content-agent" : "workspace:*",
     "markdown-agent": "workspace:*",
     "music": "workspace:*",
     "photo-agent": "workspace:*",
