@@ -2,9 +2,7 @@
 // Licensed under the MIT License.
 
 import { AppAgentManifest } from "@typeagent/agent-sdk";
-import { AppAgentProvider } from "../agent/agentProvider.js";
-import { createInlineAppAgentProvider } from "../agent/inlineAgentProvider.js";
-import { CommandHandlerContext } from "../internal.js";
+import { AppAgentProvider } from "../agentProvider/agentProvider.js";
 import {
     ActionConfig,
     ActionConfigProvider,
@@ -13,7 +11,7 @@ import {
 import {
     AgentInfo,
     createNpmAppAgentProvider,
-} from "../agent/npmAgentProvider.js";
+} from "../agentProvider/npmAgentProvider.js";
 import { getDispatcherConfig } from "./config.js";
 import { getUserProfileDir } from "./userData.js";
 import path from "node:path";
@@ -24,7 +22,7 @@ import {
 } from "../translation/actionSchemaFileCache.js";
 
 let builtinAppAgentProvider: AppAgentProvider | undefined;
-function getBuiltinAppAgentProvider(): AppAgentProvider {
+export function getBuiltinAppAgentProvider(): AppAgentProvider {
     if (builtinAppAgentProvider === undefined) {
         builtinAppAgentProvider = createNpmAppAgentProvider(
             getDispatcherConfig().agents,
@@ -69,21 +67,15 @@ function getExternalAppAgentProvider(): AppAgentProvider {
     return externalAppAgentProvider;
 }
 
-export function getDefaultAppProviders(
-    context?: CommandHandlerContext,
-): AppAgentProvider[] {
-    return [
-        createInlineAppAgentProvider(context),
-        getBuiltinAppAgentProvider(),
-        getExternalAppAgentProvider(),
-    ];
+export function getDefaultAppAgentProviders(): AppAgentProvider[] {
+    return [getBuiltinAppAgentProvider(), getExternalAppAgentProvider()];
 }
 
 let appAgentConfigs: Map<string, AppAgentManifest> | undefined;
 async function getDefaultAppAgentManifests() {
     if (appAgentConfigs === undefined) {
         appAgentConfigs = new Map();
-        const appAgentProviders = getDefaultAppProviders();
+        const appAgentProviders = getDefaultAppAgentProviders();
         for (const provider of appAgentProviders) {
             for (const name of provider.getAppAgentNames()) {
                 const manifest = await provider.getAppAgentManifest(name);
@@ -118,7 +110,7 @@ export function getActionConfigProviderFromDefaultAppAgentProviders(): ActionCon
             getActionConfig(schemaName: string) {
                 const config = actionConfigs[schemaName];
                 if (!config) {
-                    throw new Error(`Unknown translator: ${schemaName}`);
+                    throw new Error(`Unknown schema name: ${schemaName}`);
                 }
                 return config;
             },

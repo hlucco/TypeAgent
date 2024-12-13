@@ -4,7 +4,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import chalk from "chalk";
-import { loadAgentJsonTranslator } from "../../translation/agentTranslators.js";
+import {
+    ActionConfigProvider,
+    loadAgentJsonTranslator,
+    TranslatedAction,
+} from "../../translation/agentTranslators.js";
 import {
     JSONAction,
     RequestAction,
@@ -14,13 +18,12 @@ import {
     Action,
     HistoryContext,
     Actions,
+    ExplanationData,
 } from "agent-cache";
 import { getElapsedString, createLimiter, Limiter } from "common-utils";
 import { getCacheFactory } from "../cacheFactory.js";
 import { Result } from "typechat";
 import { isMultipleAction } from "../../translation/multipleActionSchema.js";
-import { TranslatedAction } from "../../handlers/requestCommandHandler.js";
-import { getActionConfigProviderFromDefaultAppAgentProviders } from "../defaultAppProviders.js";
 
 const testDataJSONVersion = 2;
 export type TestDataEntry<T extends object = object> =
@@ -34,7 +37,9 @@ export type TestDataEntry<T extends object = object> =
 
 export type TestData<T extends object = object> = {
     version: number;
-    translatorName: string;
+    // TODO: Test data only support a single schema name for now.
+    schemaName: string;
+    sourceHash: string;
     explainerName: string;
     entries: TestDataEntry<T>[];
     failed?: FailedTestDataEntry<T>[] | undefined;
@@ -63,12 +68,14 @@ export async function readLineData(file: fs.PathLike | fs.promises.FileHandle) {
 }
 
 export function getEmptyTestData(
-    translatorName: string,
+    schemaName: string,
+    sourceHash: string,
     explainerName: string,
 ): TestData {
     return {
         version: testDataJSONVersion,
-        translatorName,
+        schemaName,
+        sourceHash,
         explainerName,
         entries: [],
     };
@@ -79,7 +86,7 @@ export async function readTestData(
 ): Promise<TestData> {
     const mayBeTestData = JSON.parse(await fs.promises.readFile(file, "utf8"));
     if (
-        mayBeTestData.translatorName === undefined ||
+        mayBeTestData.schemaName === undefined ||
         mayBeTestData.explainerName === undefined ||
         mayBeTestData.entries === undefined
     ) {
@@ -87,10 +94,10 @@ export async function readTestData(
     }
     if (mayBeTestData.version === undefined) {
         // Patch the unknown format to version 2.
-        const translatorName = mayBeTestData.translatorName;
+        const schemaName = mayBeTestData.schemaName;
         const patchEntry = (entry: any) => {
             if (entry.action !== undefined) {
-                entry.action.fullActionName = `${translatorName}.${entry.action.actionName}`;
+                entry.action.fullActionName = `${schemaName}.${entry.action.actionName}`;
                 delete entry.action.actionName;
             }
         };
@@ -110,6 +117,7 @@ export async function readTestData(
 
 export type GenerateTestDataResult = {
     testData: TestData;
+    fileName: string | undefined;
     elapsedMs: number;
 };
 
@@ -204,7 +212,8 @@ function getInitialTestData(
 
     const testData = {
         version: testDataJSONVersion,
-        translatorName: existingData.translatorName,
+        schemaName: existingData.schemaName,
+        sourceHash: existingData.sourceHash,
         explainerName: existingData.explainerName,
         entries: Array.from(entries.values()),
         failed: Array.from(failedEntries.values()),
@@ -261,10 +270,18 @@ function toExceptionMessage(e: any) {
     return `Exception: ${e.message}${suffix ? `: ${suffix}` : ""}`;
 }
 
-function getSafeTranslateFn(translatorName: string, model?: string) {
+function getSafeTranslateFn(
+    schemaName: string,
+    provider: ActionConfigProvider,
+    model?: string,
+) {
     const translator = loadAgentJsonTranslator<TranslatedAction>(
-        translatorName,
-        getActionConfigProviderFromDefaultAppAgentProviders(),
+        schemaName,
+        provider,
+        {},
+        false,
+        false,
+        true,
         model,
     );
     return async (request: string): Promise<Result<TranslatedAction>> => {
@@ -277,12 +294,12 @@ function getSafeTranslateFn(translatorName: string, model?: string) {
 }
 
 function getSafeExplainFn(
-    translatorName: string,
+    schemaNames: string[],
     explainerName: string,
     model?: string,
 ) {
     const explainer = getCacheFactory().getExplainer(
-        translatorName,
+        schemaNames,
         explainerName,
         model,
     );
@@ -313,12 +330,13 @@ type AddResult =
       };
 
 function getGenerateTestDataFn(
-    translatorName: string,
+    schemaName: string,
+    provider: ActionConfigProvider,
     explainerName: string,
     model?: string,
 ) {
-    const safeTranslate = getSafeTranslateFn(translatorName, model);
-    const safeExplain = getSafeExplainFn(translatorName, explainerName, model);
+    const safeTranslate = getSafeTranslateFn(schemaName, provider, model);
+    const safeExplain = getSafeExplainFn([schemaName], explainerName, model);
     return async (
         request: string,
         action: Action | Action[] | undefined,
@@ -348,13 +366,13 @@ function getGenerateTestDataFn(
                 ? newActions.parameters.requests.map(
                       (e) =>
                           new Action(
-                              translatorName,
+                              schemaName,
                               e.action.actionName,
                               e.action.parameters,
                           ),
                   )
                 : new Action(
-                      translatorName,
+                      schemaName,
                       newActions.actionName,
                       newActions.parameters,
                   );
@@ -409,6 +427,7 @@ export async function generateTestDataFiles(
         existingData: TestData;
         outputFile: string | undefined;
     }[],
+    provider: ActionConfigProvider,
     incremental: boolean,
     concurrency: Limiter | number = 1,
     model?: string,
@@ -437,13 +456,14 @@ export async function generateTestDataFiles(
         return `[${(++curr).toString().padStart(totalStr.length)}/${totalStr}]`;
     };
     const p = initialData.map((data) =>
-        generateTestDataFile(data, incremental, limit, done, model),
+        generateTestDataFile(data, provider, incremental, limit, done, model),
     );
     return await Promise.all(p);
 }
 
 async function generateTestDataFile(
     data: InitialTestData,
+    provider: ActionConfigProvider,
     incremental: boolean,
     limit: Limiter,
     done: () => string,
@@ -454,7 +474,8 @@ async function generateTestDataFile(
     const total =
         testData.entries.length + (testData.failed?.length ?? 0) + pending.size;
     const generateTestData = getGenerateTestDataFn(
-        testData.translatorName,
+        testData.schemaName,
+        provider,
         testData.explainerName,
         model,
     );
@@ -464,7 +485,7 @@ async function generateTestDataFile(
         await saveTestDataFile(outputFile, testData, pending);
     }
 
-    const fullPrefix = `${prefix}[${testData.translatorName}|${testData.explainerName}]${outputFile ? ` ${chalk.cyanBright(path.relative("", outputFile))}` : ""}`;
+    const fullPrefix = `${prefix}[${testData.schemaName}|${testData.explainerName}]${outputFile ? ` ${chalk.cyanBright(path.relative("", outputFile))}` : ""}`;
     if (outputFile !== undefined) {
         const message: string[] = [];
         if (data.add) {
@@ -582,7 +603,7 @@ async function generateTestDataFile(
         );
     }
     console.log(`${fullPrefix}: Final stats ${messages.join(", ")}`);
-    return { testData, elapsedMs: totalElapsedMs };
+    return { testData, fileName: outputFile, elapsedMs: totalElapsedMs };
 }
 
 export function printTestDataStats(
@@ -631,4 +652,17 @@ export function printTestDataStats(
             `${prefix}Execution Time: ${getElapsedString(totalElapsedMs)}`,
         );
     }
+}
+
+export function convertTestDataToExplanationData(
+    testData: TestData,
+    outputFile?: string,
+): ExplanationData {
+    return {
+        schemaNames: [testData.schemaName],
+        sourceHashes: [testData.sourceHash],
+        explainerName: testData.explainerName,
+        entries: testData.entries,
+        fileName: outputFile,
+    };
 }

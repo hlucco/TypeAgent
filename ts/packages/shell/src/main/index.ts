@@ -22,9 +22,10 @@ import {
     RequestId,
     Dispatcher,
     NotifyExplainedData,
+    IAgentMessage,
+    TemplateEditConfig,
 } from "agent-dispatcher";
-
-import { IAgentMessage, TemplateEditConfig } from "agent-dispatcher";
+import { getDefaultAppAgentProviders } from "agent-dispatcher/internal";
 import { ShellSettings } from "./shellSettings.js";
 import { unlinkSync } from "fs";
 import { existsSync } from "node:fs";
@@ -35,7 +36,7 @@ import { WebSocketMessage } from "common-utils";
 // import { AzureSpeech } from "./azureSpeech.js";
 import { auth } from "aiclient";
 import {
-    closeLocalWhipser,
+    closeLocalWhisper,
     isLocalWhisperEnabled,
 } from "./localWhisperCommandHandler.js";
 
@@ -316,7 +317,7 @@ function createWindow(): void {
 }
 
 /**
- * Allows the application to gain access to camea devices
+ * Allows the application to gain access to camera devices
  * @param mainWindow the main browser window
  */
 function setupDevicePermissions(mainWindow: BrowserWindow) {
@@ -633,7 +634,10 @@ async function initialize() {
     electronApp.setAppUserModelId("com.electron");
 
     const dispatcher = await createDispatcher("shell", {
-        appAgentProviders: [shellAgentProvider],
+        appAgentProviders: [
+            shellAgentProvider,
+            ...getDefaultAppAgentProviders(),
+        ],
         explanationAsynchronousMode: true,
         persistSession: true,
         enableServiceHost: true,
@@ -820,7 +824,7 @@ function setupQuit(dispatcher: Dispatcher) {
         // Unregister all shortcuts.
         globalShortcut.unregisterAll();
 
-        closeLocalWhipser();
+        closeLocalWhisper();
 
         debugShell("Closing dispatcher");
         try {

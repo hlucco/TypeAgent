@@ -760,6 +760,9 @@ async function toggleSiteTranslator(targetTab: chrome.tabs.Tab) {
                 "https://www.denverpost.com/games/daily-crossword",
             ) ||
             targetTab.url.startsWith(
+                "https://www.denverpost.com/puzzles/?amu=/iwin-crossword",
+            ) ||
+            targetTab.url.startsWith(
                 "https://www.bestcrosswords.com/bestcrosswords/guestconstructor",
             )
         ) {
@@ -857,9 +860,11 @@ async function runBrowserAction(action: any) {
     switch (actionName) {
         case "openTab": {
             if (action.parameters.url) {
-                await chrome.tabs.create({
+                const tab = await chrome.tabs.create({
                     url: action.parameters.url,
                 });
+
+                await awaitPageLoad(tab);
 
                 confirmationMessage = `Opened new tab to  ${action.parameters.url}`;
             } else {
