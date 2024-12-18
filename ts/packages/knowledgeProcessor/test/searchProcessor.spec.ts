@@ -16,8 +16,8 @@ import { SearchProcessingOptions } from "../src/conversation/searchProcessor.js"
 
 // TODO: this test is not enabled on all dev machines yet. Currently requires some private datasets and indexes
 
-const testDataPath = "/data/test/search";
-const testIndexRootPath = "/data/testChat";
+const testDataPath = "./data/test/search";
+const testIndexRootPath = "./data/testChat";
 const testIndexName = "outlook";
 
 type TestContext = {
