@@ -8,7 +8,7 @@ RUN corepack enable
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
-    ca-certificates \ procps \
+    ca-certificates \
     libxss1 \
     libgconf-2-4 \
     libatk1.0-0 \
@@ -26,7 +26,12 @@ RUN apt-get update && apt-get install -y \
     libxcomposite1 \
     libxdamage1 \
     libxrandr2 \
-    xdg-utils
+    xdg-utils \
+    libsecret-1-0 \
+    libsecret-1-dev
+
+# Some systems don't recognize procps as a package
+RUN apt-get update && apt-get install -y procps
 
 # Install Chrome for Puppeteer
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
@@ -50,6 +55,8 @@ COPY --from=build /prod/tools/ /prod/tools/
 # rendering bits
 COPY --from=build /usr/src/app/packages/shell/out/ /prod/shell/out/
 WORKDIR /prod/api
+
+COPY .env /prod/api
 
 # dependencies
 RUN apt-get update
