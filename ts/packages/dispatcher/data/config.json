@@ -1,11 +1,5 @@
 {
   "agents": {
-    "player": {
-      "name": "music",
-      "imports": [
-        "./test/data/player/**/*.json"
-      ]
-    },
     "calendar": {
       "name": "calendar",
       "imports": [
