@@ -1828,6 +1828,12 @@ importers:
       greeting-agent:
         specifier: workspace:*
         version: link:../agents/greeting
+      highspot-content-agent:
+        specifier: workspace:*
+        version: link:../agents/highspotContent
+      highspot-conversation-agent:
+        specifier: workspace:*
+        version: link:../agents/highspotConversation
       image-agent:
         specifier: workspace:*
         version: link:../agents/image

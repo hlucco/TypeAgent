@@ -6,7 +6,7 @@
     "repository": {
       "type": "git",
       "url": "https://github.com/microsoft/TypeAgent.git",
-      "directory": "ts/packages/agents/highspotAnalytics"
+      "directory": "ts/packages/agents/highspotContent"
     },
     "license": "MIT",
     "author": "Highspot",

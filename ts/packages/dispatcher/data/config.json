@@ -5,12 +5,10 @@
       "execMode": "dispatcher"
     },
     "highspotContent": {
-      "name": "highspot-content-agent",
-      "execMode": "dispatcher"
+      "name": "highspot-content-agent"
     },
     "highspotConversation": {
-      "name": "highspot-conversation-agent",
-      "execMode": "dispatcher"
+      "name": "highspot-conversation-agent"
     }
   },
   "explainers": {

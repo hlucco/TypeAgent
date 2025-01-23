@@ -3,7 +3,7 @@
     "description": "Agent to do a lookup using the highspot search service",
     "schema": {
       "description": "Agent for using highspot search service",
-      "schemaFile": "./highspotConversation.ts",
+      "schemaFile": "./highspotConversationSchema.ts",
       "schemaType": "HighspotConversationAction"
     }
-  }
+}
