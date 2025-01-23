@@ -4,11 +4,11 @@
       "name": "chat-agent",
       "execMode": "dispatcher"
     },
-    "highspot-content": {
+    "highspotContent": {
       "name": "highspot-content-agent",
       "execMode": "dispatcher"
     },
-    "highspot-conversation": {
+    "highspotConversation": {
       "name": "highspot-conversation-agent",
       "execMode": "dispatcher"
     }
