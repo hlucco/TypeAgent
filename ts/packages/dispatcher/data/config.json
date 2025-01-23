@@ -1,54 +1,16 @@
 {
   "agents": {
-    "calendar": {
-      "name": "calendar",
-      "imports": [
-        "./test/data/calendar/**/*.json"
-      ]
-    },
-    "email": {
-      "name": "email"
-    },
-    "list": {
-      "name": "list-agent"
-    },
-    "browser": {
-      "name": "browser-typeagent"
-    },
-    "desktop": {
-      "name": "desktop-automation"
-    },
-    "code": {
-      "name": "code-agent"
-    },
     "chat": {
       "name": "chat-agent",
       "execMode": "dispatcher"
     },
-    "photo": {
-      "name": "photo-agent",
-      "execMode": "separate"
-    },
-    "greeting": {
-      "name": "greeting-agent",
+    "highspot-content": {
+      "name": "highspot-content-agent",
       "execMode": "dispatcher"
     },
-    "image": {
-      "name": "image-agent",
+    "highspot-conversation": {
+      "name": "highspot-conversation-agent",
       "execMode": "dispatcher"
-    },
-    "androidMobile": {
-      "name": "android-mobile-agent",
-      "execMode": "dispatcher"
-    },
-    "markdown": {
-      "name": "markdown-agent"
-    },
-    "oracle": {
-      "name": "oracle-agent"
-    },
-    "spelunker": {
-      "name": "spelunker-agent"
     }
   },
   "explainers": {
