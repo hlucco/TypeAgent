@@ -1,0 +1,9 @@
+{
+    "emojiChar": "🔵",
+    "description": "Agent to work with content & spots",
+    "schema": {
+      "description": "Agent for working with Highspot content",
+      "schemaFile": "./highspotContentSchema.ts",
+      "schemaType": "HighspotContentAction"
+    }
+  }

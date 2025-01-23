@@ -955,6 +955,50 @@ importers:
         specifier: ^5.4.2
         version: 5.4.3
 
+  packages/agents/highspotContent:
+    dependencies:
+      '@typeagent/agent-sdk':
+        specifier: workspace:*
+        version: link:../../agentSdk
+      axios:
+        specifier: ^1.7.4
+        version: 1.7.7(debug@4.3.4)
+      chalk:
+        specifier: ^5.3.0
+        version: 5.3.0
+    devDependencies:
+      prettier:
+        specifier: ^3.2.5
+        version: 3.2.5
+      rimraf:
+        specifier: ^5.0.5
+        version: 5.0.5
+      typescript:
+        specifier: ^5.4.2
+        version: 5.4.3
+
+  packages/agents/highspotConversation:
+    dependencies:
+      '@typeagent/agent-sdk':
+        specifier: workspace:*
+        version: link:../../agentSdk
+      axios:
+        specifier: ^1.7.4
+        version: 1.7.7(debug@4.3.4)
+      chalk:
+        specifier: ^5.3.0
+        version: 5.3.0
+    devDependencies:
+      prettier:
+        specifier: ^3.2.5
+        version: 3.2.5
+      rimraf:
+        specifier: ^5.0.5
+        version: 5.0.5
+      typescript:
+        specifier: ^5.4.2
+        version: 5.4.3
+
   packages/agents/image:
     dependencies:
       '@typeagent/agent-sdk':
