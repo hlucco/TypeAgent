@@ -11,7 +11,6 @@ import {
     FullAction,
     ProcessRequestActionResult,
     ExplanationOptions,
-    ParamObjectType,
     equalNormalizedParamObject,
 } from "agent-cache";
 
@@ -36,7 +35,7 @@ import {
 } from "../../../execute/actionHandlers.js";
 import { unicodeChar } from "../../../command/command.js";
 import {
-    isChangeAssistantAction,
+    isAdditionalActionLookupAction,
     TypeAgentTranslator,
     TranslatedAction,
 } from "../../../translation/agentTranslators.js";
@@ -60,8 +59,8 @@ import {
 import { DispatcherName } from "../../interactiveIO.js";
 import { getActionTemplateEditConfig } from "../../../translation/actionTemplate.js";
 import { getActionSchema } from "../../../translation/actionSchemaFileCache.js";
-import { isUnknownAction } from "../dispatcherAgent.js";
 import { UnknownAction } from "../schema/dispatcherActionSchema.js";
+import { isUnknownAction } from "../dispatcherUtils.js";
 
 const debugTranslate = registerDebug("typeagent:translate");
 const debugSemanticSearch = registerDebug("typeagent:translate:semantic");
@@ -237,6 +236,13 @@ async function matchRequest(
     return undefined;
 }
 
+function needAllAction(translatedAction: TranslatedAction, schemaName: string) {
+    return (
+        isUnknownAction(translatedAction) ||
+        (isAdditionalActionLookupAction(translatedAction) &&
+            translatedAction.parameters.schemaName === schemaName)
+    );
+}
 async function translateRequestWithSchema(
     schemaName: string,
     request: string,
@@ -270,11 +276,32 @@ async function translateRequestWithSchema(
                 return undefined;
             }
 
-            if (
-                !isUnknownAction(translatedAction) &&
-                (!isChangeAssistantAction(translatedAction) ||
-                    translatedAction.parameters.assistant !== schemaName)
-            ) {
+            if (!needAllAction(translatedAction, schemaName)) {
+                if (isMultipleAction(translatedAction)) {
+                    for (const subaction of translatedAction.parameters
+                        .requests) {
+                        if (!needAllAction(subaction.action, schemaName)) {
+                            continue;
+                        }
+                        // REVIEW: the subaction may not be
+                        const translator = getTranslatorForSchema(
+                            systemContext,
+                            schemaName,
+                        );
+                        const action = await translateWithTranslator(
+                            translator,
+                            schemaName,
+                            subaction.request,
+                            history,
+                            attachments,
+                            context,
+                        );
+                        if (action === undefined) {
+                            return undefined;
+                        }
+                        subaction.action = action;
+                    }
+                }
                 return translatedAction;
             }
         }
@@ -311,7 +338,11 @@ async function translateWithTranslator(
         .translation.stream
         ? (prop: string, value: any, delta: string | undefined) => {
               // TODO: streaming currently doesn't not support multiple actions
-              if (prop === "actionName" && delta === undefined) {
+              if (
+                  prop === "actionName" &&
+                  value !== "unknown" &&
+                  delta === undefined
+              ) {
                   const actionSchemaName =
                       systemContext.agents.getInjectedSchemaForActionName(
                           value,
@@ -414,11 +445,11 @@ async function getNextTranslation(
     forceSearch: boolean,
 ): Promise<NextTranslation | undefined> {
     let request: string;
-    if (isChangeAssistantAction(action)) {
+    if (isAdditionalActionLookupAction(action)) {
         if (!forceSearch) {
             return {
                 request: action.parameters.request,
-                nextSchemaName: action.parameters.assistant,
+                nextSchemaName: action.parameters.schemaName,
                 searched: false,
             };
         }
@@ -440,6 +471,7 @@ async function finalizeAction(
     translatorName: string,
     context: ActionContext<CommandHandlerContext>,
     history?: HistoryContext,
+    resultEntityId?: string,
 ): Promise<Action | Action[] | undefined> {
     let currentAction: TranslatedAction | undefined = action;
     let currentTranslatorName: string = translatorName;
@@ -490,7 +522,8 @@ async function finalizeAction(
         );
     }
 
-    if (isChangeAssistantAction(currentAction)) {
+    if (isAdditionalActionLookupAction(currentAction)) {
+        // This is the second change, stop it and return unknown
         const unknownAction: UnknownAction = {
             actionName: "unknown",
             parameters: { request: currentAction.parameters.request },
@@ -504,6 +537,7 @@ async function finalizeAction(
         ) ?? currentTranslatorName,
         currentAction.actionName,
         currentAction.parameters,
+        resultEntityId,
     );
 }
 
@@ -521,6 +555,7 @@ async function finalizeMultipleActions(
             translatorName,
             context,
             history,
+            request.resultEntityId,
         );
         if (finalizedActions === undefined) {
             return undefined;
@@ -689,108 +724,6 @@ export async function translateRequest(
     }
 
     return requestAction;
-}
-
-async function canExecute(
-    requestAction: RequestAction,
-    context: ActionContext<CommandHandlerContext>,
-): Promise<boolean> {
-    const actions = requestAction.actions;
-    const systemContext = context.sessionContext.agentContext;
-    const unknown: UnknownAction[] = [];
-    const disabled = new Set<string>();
-    for (const action of actions) {
-        if (isUnknownAction(action)) {
-            unknown.push(action);
-        }
-        if (
-            action.translatorName &&
-            !systemContext.agents.isActionActive(action.translatorName)
-        ) {
-            disabled.add(action.translatorName);
-        }
-    }
-
-    if (unknown.length > 0) {
-        const unknownRequests = unknown.map(
-            (action) => action.parameters.request,
-        );
-        const lines = [
-            `Unable to determine ${actions.action === undefined ? "one or more actions in" : "action for"} the request.`,
-            ...unknownRequests.map((s) => `- ${s}`),
-        ];
-        systemContext.chatHistory.addEntry(
-            lines.join("\n"),
-            [],
-            "assistant",
-            systemContext.requestId,
-        );
-
-        const config = systemContext.session.getConfig();
-        if (
-            !config.translation.switch.search &&
-            !config.translation.switch.embedding &&
-            !config.translation.switch.inline
-        ) {
-            lines.push("");
-            lines.push("Switching agents is disabled");
-        } else {
-            const entries = await Promise.all(
-                unknownRequests.map((request) =>
-                    systemContext.agents.semanticSearchActionSchema(
-                        request,
-                        1,
-                        () => true, // don't filter
-                    ),
-                ),
-            );
-            const schemaNames = new Set(
-                entries
-                    .filter((e) => e !== undefined)
-                    .map((e) => e![0].item.actionSchemaFile.schemaName)
-                    .filter(
-                        (schemaName) =>
-                            !systemContext.agents.isSchemaActive(schemaName),
-                    ),
-            );
-
-            if (schemaNames.size > 0) {
-                lines.push("");
-                lines.push(
-                    `Possible agent${schemaNames.size > 1 ? "s" : ""} to handle the request${unknownRequests.length > 1 ? "s" : ""} are not active: ${Array.from(schemaNames).join(", ")}`,
-                );
-            }
-        }
-
-        displayError(lines, context);
-        return false;
-    }
-
-    if (disabled.size > 0) {
-        const message = `Not executed. Action disabled for ${Array.from(disabled.values()).join(", ")}`;
-        systemContext.chatHistory.addEntry(
-            message,
-            [],
-            "assistant",
-            systemContext.requestId,
-        );
-
-        displayWarn(message, context);
-        return false;
-    }
-
-    return true;
-}
-
-async function requestExecute(
-    requestAction: RequestAction,
-    context: ActionContext<CommandHandlerContext>,
-) {
-    if (!(await canExecute(requestAction, context))) {
-        return;
-    }
-
-    await executeActions(requestAction.actions, context);
 }
 
 async function canTranslateWithoutContext(
@@ -1063,16 +996,15 @@ export class RequestCommandHandler implements CommandHandler {
                 .history
                 ? getChatHistoryForTranslation(systemContext)
                 : undefined;
-            if (history) {
-                // prefetch entities here
-                systemContext.chatHistory.addEntry(
-                    request,
-                    [],
-                    "user",
-                    systemContext.requestId,
-                    cachedAttachments,
-                );
-            }
+
+            // prefetch entities here
+            systemContext.chatHistory.addEntry(
+                request,
+                [],
+                "user",
+                systemContext.requestId,
+                cachedAttachments,
+            );
 
             // Make sure we clear any left over streaming context
             systemContext.streamingActionContext = undefined;
@@ -1111,7 +1043,7 @@ export class RequestCommandHandler implements CommandHandler {
                     timestamp: new Date(),
                 });
             }
-            await requestExecute(requestAction, context);
+            await executeActions(requestAction.actions, context);
             if (canUseCacheMatch) {
                 await requestExplain(
                     requestAction,

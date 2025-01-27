@@ -34,6 +34,7 @@
     "@electron-toolkit/utils": "^2.0.0",
     "@typeagent/agent-sdk": "workspace:*",
     "agent-dispatcher": "workspace:*",
+    "agent-rpc": "workspace:*",
     "aiclient": "workspace:*",
     "ansi_up": "^6.0.2",
     "common-utils": "workspace:*",
@@ -60,6 +61,6 @@
     "less": "^4.2.0",
     "rimraf": "^5.0.5",
     "typescript": "^5.4.2",
-    "vite": "^5.2.14"
+    "vite": "^5.4.12"
   }
 }

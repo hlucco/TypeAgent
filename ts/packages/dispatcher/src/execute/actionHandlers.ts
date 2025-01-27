@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { Action, Actions } from "agent-cache";
+import { Action, Actions, FullAction } from "agent-cache";
 import { CommandHandlerContext } from "../context/commandHandlerContext.js";
 import registerDebug from "debug";
 import { getAppAgentName } from "../translation/agentTranslators.js";
@@ -18,6 +18,7 @@ import {
     Entity,
     AppAgentManifest,
     AppAgent,
+    AppAction,
 } from "@typeagent/agent-sdk";
 import {
     createActionResult,
@@ -26,6 +27,7 @@ import {
 import {
     displayError,
     displayStatus,
+    displayWarn,
 } from "@typeagent/agent-sdk/helpers/display";
 import { MatchResult } from "agent-cache";
 import { getStorage } from "./storageImpl.js";
@@ -33,6 +35,8 @@ import { IncrementalJsonValueCallBack } from "common-utils";
 import { ProfileNames } from "../utils/profileNames.js";
 import { conversation } from "knowledge-processor";
 import { makeClientIOMessage } from "../context/interactiveIO.js";
+import { UnknownAction } from "../context/dispatcher/schema/dispatcherActionSchema.js";
+import { isUnknownAction } from "../context/dispatcher/dispatcherUtils.js";
 
 const debugActions = registerDebug("typeagent:dispatcher:actions");
 
@@ -49,9 +53,16 @@ function getActionContext(
     systemContext: CommandHandlerContext,
     requestId: string,
     actionIndex?: number,
+    action?: AppAction | string[],
 ) {
     let context = systemContext;
     const sessionContext = context.agents.getSessionContext(appAgentName);
+    context.clientIO.setDisplayInfo(
+        appAgentName,
+        requestId,
+        actionIndex,
+        action,
+    );
     const actionIO: ActionIO = {
         setDisplay(content: DisplayContent): void {
             context.clientIO.setDisplay(
@@ -207,10 +218,33 @@ export function createSessionContext<T = unknown>(
     return sessionContext;
 }
 
+function getStreamingActionContext(
+    appAgentName: string,
+    actionIndex: number,
+    systemContext: CommandHandlerContext,
+    fullAction: FullAction,
+) {
+    const actionContext = systemContext.streamingActionContext;
+    systemContext.streamingActionContext = undefined;
+
+    if (actionIndex !== 0 || actionContext === undefined) {
+        return undefined;
+    }
+    // If we are reusing the streaming action context, we need to update the action.
+    systemContext.clientIO.setDisplayInfo(
+        appAgentName,
+        systemContext.requestId,
+        actionIndex,
+        fullAction,
+    );
+    return actionContext;
+}
+
 async function executeAction(
     action: Action,
     context: ActionContext<CommandHandlerContext>,
     actionIndex: number,
+    entityMap?: Map<string, Entity>,
 ): Promise<ActionResult | undefined> {
     const translatorName = action.translatorName;
 
@@ -225,9 +259,6 @@ async function executeAction(
     // Update the last action translator.
     systemContext.lastActionSchemaName = translatorName;
 
-    // Update the last action name.
-    systemContext.lastActionName = action.fullActionName;
-
     if (appAgent.executeAction === undefined) {
         throw new Error(
             `Agent ${appAgentName} does not support executeAction.`,
@@ -235,17 +266,21 @@ async function executeAction(
     }
 
     // Reuse the same streaming action context if one is available.
+    const fullAction = action.toFullAction();
     const { actionContext, closeActionContext } =
-        actionIndex === 0 && systemContext.streamingActionContext
-            ? systemContext.streamingActionContext
-            : getActionContext(
-                  appAgentName,
-                  systemContext,
-                  systemContext.requestId!,
-                  actionIndex,
-              );
-
-    systemContext.streamingActionContext = undefined;
+        getStreamingActionContext(
+            appAgentName,
+            actionIndex,
+            systemContext,
+            fullAction,
+        ) ??
+        getActionContext(
+            appAgentName,
+            systemContext,
+            systemContext.requestId!,
+            actionIndex,
+            fullAction,
+        );
 
     actionContext.profiler = systemContext.commandProfiler?.measure(
         ProfileNames.executeAction,
@@ -262,7 +297,11 @@ async function executeAction(
             `${prefix}Executing action ${action.fullActionName}`,
             context,
         );
-        returnedResult = await appAgent.executeAction(action, actionContext);
+        returnedResult = await appAgent.executeAction(
+            action,
+            actionContext,
+            entityMap,
+        );
     } finally {
         actionContext.profiler?.stop();
         actionContext.profiler = undefined;
@@ -290,6 +329,7 @@ async function executeAction(
     if (debugActions.enabled) {
         debugActions(actionResultToString(result));
     }
+
     if (result.error !== undefined) {
         displayError(result.error, actionContext);
         systemContext.chatHistory.addEntry(
@@ -327,14 +367,125 @@ async function executeAction(
     return result;
 }
 
+async function canExecute(
+    actions: Actions,
+    context: ActionContext<CommandHandlerContext>,
+): Promise<boolean> {
+    const systemContext = context.sessionContext.agentContext;
+    const unknown: UnknownAction[] = [];
+    const disabled = new Set<string>();
+    for (const action of actions) {
+        if (isUnknownAction(action)) {
+            unknown.push(action);
+        }
+        if (
+            action.translatorName &&
+            !systemContext.agents.isActionActive(action.translatorName)
+        ) {
+            disabled.add(action.translatorName);
+        }
+    }
+
+    if (unknown.length > 0) {
+        const unknownRequests = unknown.map(
+            (action) => action.parameters.request,
+        );
+        const lines = [
+            `Unable to determine ${actions.action === undefined ? "one or more actions in" : "action for"} the request.`,
+            ...unknownRequests.map((s) => `- ${s}`),
+        ];
+        systemContext.chatHistory.addEntry(
+            lines.join("\n"),
+            [],
+            "assistant",
+            systemContext.requestId,
+        );
+
+        const config = systemContext.session.getConfig();
+        if (
+            !config.translation.switch.search &&
+            !config.translation.switch.embedding &&
+            !config.translation.switch.inline
+        ) {
+            lines.push("");
+            lines.push("Switching agents is disabled");
+        } else {
+            const entries = await Promise.all(
+                unknownRequests.map((request) =>
+                    systemContext.agents.semanticSearchActionSchema(
+                        request,
+                        1,
+                        () => true, // don't filter
+                    ),
+                ),
+            );
+            const schemaNames = new Set(
+                entries
+                    .filter((e) => e !== undefined)
+                    .map((e) => e![0].item.actionSchemaFile.schemaName)
+                    .filter(
+                        (schemaName) =>
+                            !systemContext.agents.isSchemaActive(schemaName),
+                    ),
+            );
+
+            if (schemaNames.size > 0) {
+                lines.push("");
+                lines.push(
+                    `Possible agent${schemaNames.size > 1 ? "s" : ""} to handle the request${unknownRequests.length > 1 ? "s" : ""} are not active: ${Array.from(schemaNames).join(", ")}`,
+                );
+            }
+        }
+
+        displayError(lines, context);
+        return false;
+    }
+
+    if (disabled.size > 0) {
+        const message = `Not executed. Action disabled for ${Array.from(disabled.values()).join(", ")}`;
+        systemContext.chatHistory.addEntry(
+            message,
+            [],
+            "assistant",
+            systemContext.requestId,
+        );
+
+        displayWarn(message, context);
+        return false;
+    }
+
+    return true;
+}
+
 export async function executeActions(
     actions: Actions,
     context: ActionContext<CommandHandlerContext>,
 ) {
+    const systemContext = context.sessionContext.agentContext;
+    if (systemContext.commandResult === undefined) {
+        systemContext.commandResult = { actions: actions.toFullActions() };
+    } else {
+        systemContext.commandResult.actions = actions.toFullActions();
+    }
+
+    if (!(await canExecute(actions, context))) {
+        return;
+    }
     debugActions(`Executing actions: ${JSON.stringify(actions, undefined, 2)}`);
     let actionIndex = 0;
+    const entityMap = new Map<string, Entity>();
     for (const action of actions) {
-        await executeAction(action, context, actionIndex);
+        const result = await executeAction(
+            action,
+            context,
+            actionIndex,
+            entityMap,
+        );
+        if (result && result.error === undefined) {
+            if (result.resultEntity && action.resultEntityId) {
+                entityMap.set(action.resultEntityId, result.resultEntity);
+            }
+        }
         actionIndex++;
     }
 }
@@ -381,6 +532,10 @@ export function startStreamPartialAction(
         context,
         context.requestId!,
         0,
+        {
+            translatorName,
+            actionName,
+        },
     );
 
     context.streamingActionContext = actionContextWithClose;
@@ -402,7 +557,7 @@ export async function executeCommand(
     appAgentName: string,
     context: CommandHandlerContext,
     attachments?: string[],
-) {
+): Promise<void> {
     const appAgent = context.agents.getAppAgent(appAgentName);
     if (appAgent.executeCommand === undefined) {
         throw new Error(
@@ -410,20 +565,16 @@ export async function executeCommand(
         );
     }
 
+    // update the last action name
     const { actionContext, closeActionContext } = getActionContext(
         appAgentName,
         context,
         context.requestId!,
+        undefined,
+        commands,
     );
 
     try {
-        // update the last action name
-        if (commands.length > 0) {
-            context.lastActionName = `${appAgentName}.${commands.join(".")}`;
-        } else {
-            context.lastActionName = undefined;
-        }
-
         actionContext.profiler = context.commandProfiler?.measure(
             ProfileNames.executeCommand,
             true,
@@ -438,7 +589,6 @@ export async function executeCommand(
     } finally {
         actionContext.profiler?.stop();
         actionContext.profiler = undefined;
-        context.lastActionName = undefined;
         closeActionContext();
     }
 }

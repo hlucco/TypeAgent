@@ -13,33 +13,28 @@ import {
     WebContents,
     BrowserView,
 } from "electron";
-import { join } from "node:path";
+import path, { join } from "node:path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { runDemo } from "./demo.js";
 import registerDebug from "debug";
-import {
-    ClientIO,
-    createDispatcher,
-    RequestId,
-    Dispatcher,
-    NotifyExplainedData,
-    IAgentMessage,
-    TemplateEditConfig,
-} from "agent-dispatcher";
+import { createDispatcher, Dispatcher } from "agent-dispatcher";
 import { getDefaultAppAgentProviders } from "agent-dispatcher/internal";
 import { ShellSettings } from "./shellSettings.js";
 import { unlinkSync } from "fs";
 import { existsSync } from "node:fs";
-import { AppAgentEvent, DisplayAppendMode } from "@typeagent/agent-sdk";
 import { shellAgentProvider } from "./agent.js";
 import { BrowserAgentIpc } from "./browserIpc.js";
-import { WebSocketMessage } from "common-utils";
+import { WebSocketMessageV2 } from "common-utils";
 import { AzureSpeech } from "./azureSpeech.js";
 import { auth } from "aiclient";
 import {
     closeLocalWhisper,
     isLocalWhisperEnabled,
 } from "./localWhisperCommandHandler.js";
+import { createDispatcherRpcServer } from "agent-dispatcher/rpc/dispatcher/server";
+import { createGenericChannel } from "agent-rpc/channel";
+import net from "node:net";
+import { createClientIORpcClient } from "agent-dispatcher/rpc/clientio/client";
 
 console.log(auth.AzureTokenScopes.CogServices);
 
@@ -103,7 +98,8 @@ function setContentSize() {
 
 const time = performance.now();
 debugShell("Starting...");
-function createWindow(): void {
+
+function createWindow() {
     debugShell("Creating window", performance.now() - time);
 
     // Create the browser window.
@@ -307,7 +303,7 @@ function createWindow(): void {
         await BrowserAgentIpc.getinstance().ensureWebsocketConnected();
 
         BrowserAgentIpc.getinstance().onMessageReceived = (
-            message: WebSocketMessage,
+            message: WebSocketMessageV2,
         ) => {
             inlineBrowserView?.webContents.send(
                 "received-from-browser-ipc",
@@ -315,6 +311,8 @@ function createWindow(): void {
             );
         };
     });
+
+    return { mainWindow, chatView };
 }
 
 /**
@@ -430,163 +428,6 @@ async function triggerRecognitionOnce() {
     );
 }
 
-function updateDisplay(message: IAgentMessage, mode?: DisplayAppendMode) {
-    // Ignore message without requestId
-    if (message.requestId === undefined) {
-        console.warn("updateDisplay: requestId is undefined");
-        return;
-    }
-    chatView?.webContents.send("updateDisplay", message, mode);
-}
-
-function notifyExplained(requestId: RequestId, data: NotifyExplainedData) {
-    // Ignore message without requestId
-    if (requestId === undefined) {
-        console.warn("notifyExplained: requestId is undefined");
-        return;
-    }
-    chatView?.webContents.send("notifyExplained", requestId, data);
-}
-
-function updateRandomCommandSelected(requestId: RequestId, message: string) {
-    // Ignore message without requestId
-    if (requestId === undefined) {
-        console.warn("updateRandomCommandSelected: requestId is undefined");
-        return;
-    }
-
-    chatView?.webContents.send("update-random-command", requestId, message);
-}
-
-let maxAskYesNoId = 0;
-async function askYesNo(
-    message: string,
-    requestId: RequestId,
-    defaultValue: boolean = false,
-) {
-    // Ignore message without requestId
-    if (requestId === undefined) {
-        console.warn("askYesNo: requestId is undefined");
-        return defaultValue;
-    }
-    const currentAskYesNoId = maxAskYesNoId++;
-    return new Promise<boolean>((resolve) => {
-        const callback = (
-            _event: Electron.IpcMainEvent,
-            questionId: number,
-            response: boolean,
-        ) => {
-            if (currentAskYesNoId !== questionId) {
-                return;
-            }
-            ipcMain.removeListener("askYesNoResponse", callback);
-            resolve(response);
-        };
-        ipcMain.on("askYesNoResponse", callback);
-        chatView?.webContents.send(
-            "askYesNo",
-            currentAskYesNoId,
-            message,
-            requestId,
-        );
-    });
-}
-
-let maxProposeActionId = 0;
-async function proposeAction(
-    actionTemplates: TemplateEditConfig,
-    requestId: RequestId,
-    source: string,
-) {
-    const currentProposeActionId = maxProposeActionId++;
-    return new Promise<unknown>((resolve) => {
-        const callback = (
-            _event: Electron.IpcMainEvent,
-            proposeActionId: number,
-            replacement?: unknown,
-        ) => {
-            if (currentProposeActionId !== proposeActionId) {
-                return;
-            }
-            ipcMain.removeListener("proposeActionResponse", callback);
-            resolve(replacement);
-        };
-        ipcMain.on("proposeActionResponse", callback);
-        chatView?.webContents.send(
-            "proposeAction",
-            currentProposeActionId,
-            actionTemplates,
-            requestId,
-            source,
-        );
-    });
-}
-
-const clientIO: ClientIO = {
-    clear: () => {
-        chatView?.webContents.send("clear");
-    },
-    setDisplay: updateDisplay,
-    appendDisplay: (message, mode) => updateDisplay(message, mode ?? "inline"),
-    setDynamicDisplay,
-    askYesNo,
-    proposeAction,
-    notify(event: string, requestId: RequestId, data: any, source: string) {
-        switch (event) {
-            case "explained":
-                notifyExplained(requestId, data);
-                break;
-            case "randomCommandSelected":
-                updateRandomCommandSelected(requestId, data.message);
-                break;
-            case "showNotifications":
-                chatView?.webContents.send(
-                    "notification-command",
-                    requestId,
-                    data,
-                );
-                break;
-            case AppAgentEvent.Error:
-            case AppAgentEvent.Warning:
-            case AppAgentEvent.Info:
-                console.log(`[${event}] ${source}: ${data}`);
-                chatView?.webContents.send(
-                    "notification-arrived",
-                    event,
-                    requestId,
-                    source,
-                    data,
-                );
-                break;
-            default:
-            // ignore
-        }
-    },
-    exit: () => {
-        app.quit();
-    },
-    takeAction: (action: string, data: unknown) => {
-        chatView?.webContents.send("take-action", action, data);
-    },
-};
-
-async function setDynamicDisplay(
-    source: string,
-    requestId: RequestId,
-    actionIndex: number,
-    displayId: string,
-    nextRefreshMs: number,
-) {
-    chatView?.webContents.send(
-        "set-dynamic-action-display",
-        source,
-        requestId,
-        actionIndex,
-        displayId,
-        nextRefreshMs,
-    );
-}
-
 async function initializeSpeech() {
     const key = process.env["SPEECH_SDK_KEY"];
     const region = process.env["SPEECH_SDK_REGION"];
@@ -624,15 +465,27 @@ async function initializeSpeech() {
     }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-async function initialize() {
-    debugShell("Ready", performance.now() - time);
-    // Set app user model id for windows
-    electronApp.setAppUserModelId("com.electron");
+async function initializeDispatcher(
+    chatView: BrowserView,
+    updateSummary: (dispatcher: Dispatcher) => void,
+) {
+    const clientIOChannel = createGenericChannel((message: any) => {
+        chatView.webContents.send("clientio-rpc-call", message);
+    });
+    ipcMain.on("clientio-rpc-reply", (_event, message) => {
+        clientIOChannel.message(message);
+    });
 
-    const dispatcher = await createDispatcher("shell", {
+    const newClientIO = createClientIORpcClient(clientIOChannel.channel);
+    const clientIO = {
+        ...newClientIO,
+        exit: () => {
+            app.quit();
+        },
+    };
+
+    // Set up dispatcher
+    const newDispatcher = await createDispatcher("shell", {
         appAgentProviders: [
             shellAgentProvider,
             ...getDefaultAppAgentProviders(),
@@ -641,10 +494,10 @@ async function initialize() {
         persistSession: true,
         enableServiceHost: true,
         metrics: true,
+        dblogging: true,
         clientIO,
     });
 
-    let settingSummary: string = "";
     async function processShellRequest(
         text: string,
         id: string,
@@ -653,108 +506,89 @@ async function initialize() {
         if (typeof text !== "string" || typeof id !== "string") {
             throw new Error("Invalid request");
         }
-        debugShell(dispatcher.getPrompt(), text);
+        debugShell(newDispatcher.getPrompt(), text);
 
-        const metrics = await dispatcher.processCommand(text, id, images);
-        chatView?.webContents.send("send-demo-event", "CommandProcessed");
+        const metrics = await newDispatcher.processCommand(text, id, images);
+        chatView.webContents.send("send-demo-event", "CommandProcessed");
+        updateSummary(dispatcher);
+        return metrics;
+    }
+
+    const dispatcher = {
+        ...newDispatcher,
+        processCommand: processShellRequest,
+    };
+
+    // Set up the RPC
+    const dispatcherChannel = createGenericChannel((message: any) => {
+        chatView.webContents.send("dispatcher-rpc-reply", message);
+    });
+    ipcMain.on("dispatcher-rpc-call", (_event, message) => {
+        dispatcherChannel.message(message);
+    });
+    createDispatcherRpcServer(dispatcher, dispatcherChannel.channel);
+
+    setupQuit(dispatcher);
+
+    // Dispatcher is ready to be called from the client, but we need to wait for the dom to be ready to start
+    // using it to process command, so that the client can receive messages.
+    debugShell("Dispatcher initialized", performance.now() - time);
+
+    return dispatcher;
+}
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+async function initialize() {
+    debugShell("Ready", performance.now() - time);
+    // Set app user model id for windows
+    electronApp.setAppUserModelId("com.electron");
+
+    await initializeSpeech();
+
+    const { mainWindow, chatView } = createWindow();
+
+    let settingSummary: string = "";
+    function updateSummary(dispatcher: Dispatcher) {
         const newSettingSummary = dispatcher.getSettingSummary();
         if (newSettingSummary !== settingSummary) {
             settingSummary = newSettingSummary;
-            chatView?.webContents.send(
+            chatView.webContents.send(
                 "setting-summary-changed",
                 newSettingSummary,
                 dispatcher.getTranslatorNameToEmojiMap(),
             );
 
-            mainWindow?.setTitle(
-                `${newSettingSummary} Zoom: ${Math.round(chatView?.webContents.zoomFactor! * 100)}%`,
+            mainWindow.setTitle(
+                `${newSettingSummary} Zoom: ${Math.round(chatView.webContents.zoomFactor! * 100)}%`,
             );
         }
-
-        return metrics;
     }
 
-    if (ShellSettings.getinstance().agentGreeting) {
-        processShellRequest("@greeting", "agent-0", []);
-    }
+    // Note: Make sure dom ready before using dispatcher.
+    const dispatcherP = initializeDispatcher(chatView, updateSummary);
 
-    ipcMain.on(
-        "process-shell-request",
-        (_event, text: string, id: string, images: string[]) => {
-            processShellRequest(text, id, images)
-                .then((metrics) =>
-                    chatView?.webContents.send(
-                        "process-shell-request-done",
-                        id,
-                        metrics,
-                    ),
-                )
-                .catch((error) => {
-                    chatView?.webContents.send(
-                        "process-shell-request-error",
-                        id,
-                        error.message,
-                    );
-                });
-        },
-    );
-    ipcMain.handle("getCommandCompletion", async (_event, prefix: string) => {
-        return dispatcher.getCommandCompletion(prefix);
-    });
-    ipcMain.handle(
-        "getTemplateCompletion",
-        async (
-            _event,
-            templateAgentName: string,
-            templateName: string,
-            data: unknown,
-            propertyName: string,
-        ) => {
-            return dispatcher.getTemplateCompletion(
-                templateAgentName,
-                templateName,
-                data,
-                propertyName,
-            );
-        },
-    );
-    ipcMain.handle("get-dynamic-display", async (_event, appAgentName, id) =>
-        dispatcher.getDynamicDisplay(appAgentName, "html", id),
-    );
-    ipcMain.handle(
-        "get-template-schema",
-        async (_event, templateAgentName, templateName, data) => {
-            return dispatcher.getTemplateSchema(
-                templateAgentName,
-                templateName,
-                data,
-            );
-        },
-    );
     ipcMain.on("dom ready", async () => {
-        settingSummary = dispatcher.getSettingSummary();
-        chatView?.webContents.send(
-            "setting-summary-changed",
-            settingSummary,
-            dispatcher.getTranslatorNameToEmojiMap(),
-        );
-
-        mainWindow?.setTitle(
-            `${settingSummary} Zoom: ${Math.round(chatView?.webContents.zoomFactor! * 100)}%`,
-        );
-        mainWindow?.show();
+        mainWindow.show();
 
         // Send settings asap
         ShellSettings.getinstance().onSettingsChanged!();
 
         // make sure links are opened in the external browser
-        mainWindow?.webContents.setWindowOpenHandler((details) => {
+        mainWindow.webContents.setWindowOpenHandler((details) => {
             require("electron").shell.openExternal(details.url);
             return { action: "deny" };
         });
+
+        // The dispatcher can be use now that dom is ready and the client is ready to receive messages
+        const dispatcher = await dispatcherP;
+        updateSummary(dispatcher);
+        if (ShellSettings.getinstance().agentGreeting) {
+            dispatcher.processCommand("@greeting", "agent-0", []);
+        }
     });
 
-    await initializeSpeech();
     ipcMain.handle("get-localWhisper-status", async () => {
         return isLocalWhisperEnabled();
     });
@@ -773,15 +607,13 @@ async function initialize() {
 
     ipcMain.on(
         "send-to-browser-ipc",
-        async (_event, data: WebSocketMessage) => {
+        async (_event, data: WebSocketMessageV2) => {
             await BrowserAgentIpc.getinstance().send(data);
         },
     );
     globalShortcut.register("Alt+Right", () => {
-        chatView?.webContents.send("send-demo-event", "Alt+Right");
+        chatView.webContents.send("send-demo-event", "Alt+Right");
     });
-
-    setupQuit(dispatcher);
 
     // Default open or close DevTools by F12 in development
     // and ignore CommandOrControl + R in production.
@@ -797,13 +629,30 @@ async function initialize() {
         });
     });
 
-    createWindow();
-
     app.on("activate", function () {
         // On macOS it's common to re-create a window in the app when the
         // dock icon is clicked and there are no other windows open.
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
+
+    // On windows, we will spin up a local end point that listens
+    // for pen events which will trigger speech reco
+    if (process.platform == "win32") {
+        const pipePath = path.join("\\\\.\\pipe\\TypeAgent", "speech");
+        const server = net.createServer((stream) => {
+            stream.on("data", (c) => {
+                if (c.toString() == "triggerRecognitionOnce") {
+                    console.log("Pen click note button click received!");
+                    triggerRecognitionOnce();
+                }
+            });
+            stream.on("error", (e) => {
+                console.log(e);
+            });
+        });
+
+        server.listen(pipePath);
+    }
 }
 
 app.whenReady()
@@ -831,6 +680,7 @@ function setupQuit(dispatcher: Dispatcher) {
         } catch (e) {
             debugShellError("Error closing dispatcher", e);
         }
+
         debugShell("Quitting");
         canQuit = true;
         app.quit();

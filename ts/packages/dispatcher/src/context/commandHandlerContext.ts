@@ -64,15 +64,10 @@ import registerDebug from "debug";
 import path from "node:path";
 import { createSchemaInfoProvider } from "../translation/actionSchemaFileCache.js";
 import { createInlineAppAgentProvider } from "./inlineAgentProvider.js";
+import { CommandResult } from "../dispatcher.js";
 
 const debug = registerDebug("typeagent:dispatcher:init");
 const debugError = registerDebug("typeagent:dispatcher:init:error");
-
-export interface CommandResult {
-    error?: boolean;
-    message?: string;
-    html?: boolean;
-}
 
 export type EmptyFunction = () => void;
 export type SetSettingFunction = (name: string, value: any) => void;
@@ -101,13 +96,13 @@ export type CommandHandlerContext = {
     // Runtime context
     commandLock: Limiter; // Make sure we process one command at a time.
     lastActionSchemaName: string;
-    lastActionName: string | undefined;
     translatorCache: Map<string, TypeAgentTranslator>;
     agentCache: AgentCache;
     currentScriptDir: string;
     logger?: Logger | undefined;
     serviceHost: ChildProcess | undefined;
     requestId?: RequestId;
+    commandResult?: CommandResult | undefined;
     chatHistory: ChatHistory;
 
     batchMode: boolean;
@@ -210,6 +205,7 @@ export type InitializeCommandHandlerContextOptions = SessionOptions & {
     clientIO?: ClientIO | undefined; // undefined to disable any IO.
     enableServiceHost?: boolean; // default to false,
     metrics?: boolean; // default to false
+    dblogging?: boolean; // default to false
 };
 
 async function getSession(instanceDir?: string) {
@@ -237,6 +233,14 @@ function getLoggerSink(isDbEnabled: () => boolean, clientIO: ClientIO) {
             "telemetrydb",
             "dispatcherlogs",
             isDbEnabled,
+            (e: string) => {
+                clientIO.notify(
+                    AppAgentEvent.Warning,
+                    undefined,
+                    e,
+                    DispatcherName,
+                );
+            },
         );
     } catch (e) {
         clientIO.notify(
@@ -358,14 +362,13 @@ export async function initializeCommandHandlerContext(
             instanceDir,
             conversationManager,
             explanationAsynchronousMode,
-            dblogging: true,
+            dblogging: options?.dblogging ?? false,
             clientIO,
 
             // Runtime context
             commandLock: createLimiter(1), // Make sure we process one command at a time.
             agentCache: await getAgentCache(session, agents, logger),
             lastActionSchemaName: DispatcherName,
-            lastActionName: "request",
             translatorCache: new Map<string, TypeAgentTranslator>(),
             currentScriptDir: process.cwd(),
             chatHistory: createChatHistory(),
@@ -496,6 +499,7 @@ export async function setSessionOnCommandHandlerContext(
         context.logger,
     );
     await setAppAgentStates(context);
+    context.translatorCache.clear();
 }
 
 export async function reloadSessionOnCommandHandlerContext(
