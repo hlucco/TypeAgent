@@ -1,0 +1,9 @@
+{
+    "emojiChar": "🗣️",
+    "description": "Agent to do a lookup using the highspot search service",
+    "schema": {
+      "description": "Agent for using highspot search service",
+      "schemaFile": "./highspotConversationSchema.ts",
+      "schemaType": "HighspotConversationAction"
+    }
+}

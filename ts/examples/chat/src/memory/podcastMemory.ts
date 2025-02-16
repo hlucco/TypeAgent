@@ -392,6 +392,7 @@ export function createPodcastCommands(
                 searchOptions,
             );
         } else {
+            console.log("IN SEARCH");
             result = await searcher.searchTerms(
                 query,
                 undefined,
@@ -454,6 +455,7 @@ export function createPodcastCommands(
         args: string[],
         io: InteractiveIo,
     ): Promise<void> {
+        console.log("ABOUT TO SEARCH");
         await searchConversation(
             context.podcastMemory.searchProcessor,
             true,

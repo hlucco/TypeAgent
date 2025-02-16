@@ -1,0 +1,38 @@
+{
+  "name": "highspot-conversation-agent",
+  "version": "0.0.1",
+  "description": "highspot conversation agent",
+  "homepage": "https://github.com/microsoft/TypeAgent#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/TypeAgent.git",
+    "directory": "ts/packages/agents/highspotConversation"
+  },
+  "license": "MIT",
+  "author": "Highspot",
+  "type": "module",
+  "exports": {
+    "./agent/manifest": "./src/agent/highspotConversationManifest.json",
+    "./agent/handlers": "./dist/agent/highspotConversationActionHandler.js"
+  },
+  "scripts": {
+    "build": "npm run tsc",
+    "clean": "rimraf --glob dist *.tsbuildinfo *.done.build.log",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+    "tsc": "tsc -b"
+  },
+  "dependencies": {
+    "@typeagent/agent-sdk": "workspace:*",
+    "axios": "^1.7.4",
+    "better-sqlite3": "11.8.1",
+    "chalk": "^5.3.0",
+    "csv-parser": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.11",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.4.2"
+  }
+}
