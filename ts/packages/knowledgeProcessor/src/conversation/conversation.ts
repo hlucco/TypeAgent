@@ -656,6 +656,7 @@ export async function createConversation(
         filters: TermFilter[],
         options: ConversationSearchOptions,
     ): Promise<SearchResponse> {
+        console.log("SEARCHING TERMS HERE");
         const [entityIndex, topicIndex, actionIndex] = await Promise.all([
             getEntityIndex(),
             getTopicsIndex(options.topicLevel),

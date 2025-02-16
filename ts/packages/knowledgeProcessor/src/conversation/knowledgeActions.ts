@@ -95,6 +95,8 @@ export function createKnowledgeActionTranslator(
         userRequest: string,
         context?: PromptSection[],
     ): Promise<Result<SearchTermsAction>> {
+        console.log("USER REQUEST: ", userRequest);
+        console.log("CONTEXT: ", context);
         return searchTermsTranslator.translate(userRequest, context);
     }
 

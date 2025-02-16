@@ -57,6 +57,7 @@
     "list-agent": "workspace:*",
     "highspot-content-agent" : "workspace:*",
     "highspot-conversation-agent" : "workspace:*",
+    "highspot-quiz-agent" : "workspace:*",
     "markdown-agent": "workspace:*",
     "music": "workspace:*",
     "oracle-agent": "workspace:*",

@@ -40,7 +40,7 @@ export async function createKnowproCommands(
 ): Promise<void> {
     const context: KnowProContext = {
         knowledgeModel: chatContext.models.chatModel,
-        basePath: "/data/testChat/knowpro",
+        basePath: "./data/testChat/knowpro",
         printer: new KnowProPrinter(),
     };
     await ensureDir(context.basePath);
@@ -242,7 +242,7 @@ export async function createKnowproCommands(
             context.printer.writeSemanticRefs(matches);
         }
     }
-    /*---------- 
+    /*----------
       End COMMANDS
     ------------*/
 

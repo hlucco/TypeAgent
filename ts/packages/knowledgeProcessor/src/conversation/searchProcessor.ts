@@ -408,6 +408,11 @@ export function createSearchProcessor(
         await adjustMessages(query, response, searchOptions, options);
         response.topKSettings = answers.settings.topK;
         if (!options.skipAnswerGeneration) {
+            console.log("Generating answer for search terms");
+            console.log("Query: ", query);
+            console.log("Response: ", response);
+            console.log("ENTITIES: ", response.entities.map((e) => e.entities));
+            console.log("Options: ", options);
             await generateAnswerForSearchTerms(
                 query,
                 response,

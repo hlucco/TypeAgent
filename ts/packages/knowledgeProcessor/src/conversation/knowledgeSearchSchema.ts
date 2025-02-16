@@ -3,7 +3,7 @@
 
 import { DateTimeRange } from "./dateTimeSchema.js";
 
-/* 
+/*
  A conversation is a sequence of messages between one or more users/speakers and assistants.
  The message sequence, and any entities/topics in each message are indexed.
    Entity is defined as: Specific, tangible people, places, institutions or things

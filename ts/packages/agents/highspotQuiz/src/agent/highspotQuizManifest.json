@@ -1,0 +1,9 @@
+{
+    "emojiChar": "🩵",
+    "description": "Agent that loads documents and generates quizes from them",
+    "schema": {
+      "description": "Agent that loads documents and generates quizes from them",
+      "schemaFile": "./highspotQuizSchema.ts",
+      "schemaType": "HighspotQuizAction"
+    }
+  }

@@ -1,12 +1,5 @@
 {
   "agents": {
-    "chat": {
-      "name": "chat-agent",
-      "execMode": "dispatcher"
-    },
-    "highspotContent": {
-      "name": "highspot-content-agent"
-    },
     "highspotConversation": {
       "name": "highspot-conversation-agent"
     }
