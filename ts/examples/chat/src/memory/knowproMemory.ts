@@ -44,7 +44,7 @@ export async function createKnowproCommands(
 ): Promise<void> {
     const context: KnowProContext = {
         knowledgeModel: chatContext.models.chatModel,
-        basePath: "./data/testChat/knowpro",
+        basePath: "/data/testChat/knowpro",
         printer: new KnowProPrinter(),
     };
     await ensureDir(context.basePath);
@@ -414,7 +414,75 @@ export async function createKnowproCommands(
             }
         }
     }
-    /*----------
+
+    function podcastBuildIndexDef(): CommandMetadata {
+        return {
+            description: "Build index",
+            options: {
+                knowLedge: argBool("Index knowledge", false),
+                related: argBool("Index related terms", false),
+                maxMessages: argNum("Maximum messages to index"),
+            },
+        };
+    }
+    commands.kpPodcastBuildIndex.metadata = podcastBuildIndexDef();
+    async function podcastBuildIndex(
+        args: string[] | NamedArgs,
+    ): Promise<void> {
+        if (!context.podcast) {
+            context.printer.writeError("No podcast loaded");
+            return;
+        }
+        if (!context.podcast.semanticRefIndex) {
+            context.printer.writeError("Podcast not indexed");
+            return;
+        }
+        const messageCount = context.podcast.messages.length;
+        if (messageCount === 0) {
+            return;
+        }
+
+        const namedArgs = parseNamedArguments(args, podcastBuildIndexDef());
+        // Build index
+        context.printer.writeLine();
+        context.printer.writeLine("Building index");
+        if (namedArgs.knowledge) {
+            context.printer.writeLine("Building knowledge index");
+            const maxMessages = namedArgs.maxMessages ?? messageCount;
+            let progress = new ProgressBar(context.printer, maxMessages);
+            const indexResult = await context.podcast.buildIndex(
+                (text, result) => {
+                    progress.advance();
+                    if (!result.success) {
+                        context.printer.writeError(
+                            `${result.message}\n${text}`,
+                        );
+                    }
+                    return progress.count < maxMessages;
+                },
+            );
+            progress.complete();
+            context.printer.writeLine(`Indexed ${maxMessages} items`);
+            context.printer.writeIndexingResults(indexResult);
+        }
+        if (namedArgs.related) {
+            context.printer.writeLine("Building semantic index");
+            const progress = new ProgressBar(
+                context.printer,
+                context.podcast.semanticRefIndex.size,
+            );
+            await context.podcast.buildRelatedTermsIndex(16, (terms, batch) => {
+                progress.advance(batch.value.length);
+                return true;
+            });
+            progress.complete();
+            context.printer.writeLine(
+                `Semantic Indexed ${context.podcast.semanticRefIndex.size} terms`,
+            );
+        }
+    }
+
+    /*---------- 
       End COMMANDS
     ------------*/
 
