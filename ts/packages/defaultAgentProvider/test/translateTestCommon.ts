@@ -17,6 +17,7 @@ type TranslateTestStep = {
     match?: "exact" | "partial"; // default to "exact"
     // History insertion after translation (if any)
     history?: ChatHistoryInput | ChatHistoryInput[];
+    attachments?: string[] | undefined;
 };
 type TranslateTestEntry = TranslateTestStep | TranslateTestStep[];
 type TranslateTestFile = TranslateTestEntry[];
@@ -52,8 +53,10 @@ export async function defineTranslateTest(name: string, dataFiles: string[]) {
                 dispatcherP.push(
                     createDispatcher("cli test translate", {
                         appAgentProviders: defaultAppAgentProviders,
-                        actions: null,
-                        commands: { dispatcher: true },
+                        agents: {
+                            actions: false,
+                            commands: ["dispatcher"],
+                        },
                         execution: { history: false }, // don't generate chat history, the test manually imports them
                         explainer: { enabled: false },
                         cache: { enabled: false },
@@ -77,9 +80,14 @@ export async function defineTranslateTest(name: string, dataFiles: string[]) {
             await Promise.all(
                 dispatchers.map(async (dispatcher) => {
                     for (const step of steps) {
-                        const { request, action, match, history } = step;
+                        const { request, action, match, history, attachments } =
+                            step;
 
-                        const result = await dispatcher.processCommand(request);
+                        const result = await dispatcher.processCommand(
+                            request,
+                            undefined,
+                            attachments,
+                        );
                         expect(result?.hasError).toBeFalsy();
 
                         const actions = result?.actions;

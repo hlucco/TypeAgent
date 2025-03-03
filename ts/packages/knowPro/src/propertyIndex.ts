@@ -2,13 +2,16 @@
 // Licensed under the MIT License.
 
 import {
+    IConversation,
     ScoredSemanticRef,
     SemanticRef,
     SemanticRefIndex,
-} from "./dataFormat.js";
-import { conversation } from "knowledge-processor";
-import { IPropertyToSemanticRefIndex } from "./secondaryIndexes.js";
+    Tag,
+} from "./interfaces.js";
+import { conversation as kpLib } from "knowledge-processor";
+import { IPropertyToSemanticRefIndex } from "./interfaces.js";
 import { TextRangesInScope } from "./collections.js";
+import { facetValueToString } from "./knowledge.js";
 
 export enum PropertyNames {
     EntityName = "name",
@@ -19,10 +22,11 @@ export enum PropertyNames {
     Subject = "subject",
     Object = "object",
     IndirectObject = "indirectObject",
+    Tag = "tag",
 }
 
 function addFacet(
-    facet: conversation.Facet | undefined,
+    facet: kpLib.Facet | undefined,
     propertyIndex: IPropertyToSemanticRefIndex,
     semanticRefIndex: SemanticRefIndex,
 ) {
@@ -35,7 +39,7 @@ function addFacet(
         if (facet.value !== undefined) {
             propertyIndex.addProperty(
                 PropertyNames.FacetValue,
-                conversation.knowledgeValueToString(facet.value),
+                facetValueToString(facet),
                 semanticRefIndex,
             );
         }
@@ -43,7 +47,7 @@ function addFacet(
 }
 
 export function addEntityPropertiesToIndex(
-    entity: conversation.ConcreteEntity,
+    entity: kpLib.ConcreteEntity,
     propertyIndex: IPropertyToSemanticRefIndex,
     semanticRefIndex: SemanticRefIndex,
 ) {
@@ -68,7 +72,7 @@ export function addEntityPropertiesToIndex(
 }
 
 export function addActionPropertiesToIndex(
-    action: conversation.Action,
+    action: kpLib.Action,
     propertyIndex: IPropertyToSemanticRefIndex,
     semanticRefIndex: SemanticRefIndex,
 ) {
@@ -100,27 +104,48 @@ export function addActionPropertiesToIndex(
     }
 }
 
-export function addPropertiesToIndex(
-    semanticRefs: SemanticRef[],
+export function buildPropertyIndex(conversation: IConversation) {
+    if (conversation.secondaryIndexes && conversation.semanticRefs) {
+        conversation.secondaryIndexes.propertyToSemanticRefIndex ??=
+            new PropertyIndex();
+        addToPropertyIndex(
+            conversation.secondaryIndexes.propertyToSemanticRefIndex,
+            conversation.semanticRefs,
+            0,
+        );
+    }
+}
+
+export function addToPropertyIndex(
     propertyIndex: IPropertyToSemanticRefIndex,
+    semanticRefs: SemanticRef[],
+    baseSemanticRefIndex: SemanticRefIndex,
 ) {
     for (let i = 0; i < semanticRefs.length; ++i) {
         const semanticRef = semanticRefs[i];
-        const semanticRefIndex: SemanticRefIndex = i;
+        const semanticRefIndex: SemanticRefIndex = i + baseSemanticRefIndex;
         switch (semanticRef.knowledgeType) {
             default:
                 break;
             case "action":
                 addActionPropertiesToIndex(
-                    semanticRef.knowledge as conversation.Action,
+                    semanticRef.knowledge as kpLib.Action,
                     propertyIndex,
                     semanticRefIndex,
                 );
                 break;
             case "entity":
                 addEntityPropertiesToIndex(
-                    semanticRef.knowledge as conversation.ConcreteEntity,
+                    semanticRef.knowledge as kpLib.ConcreteEntity,
                     propertyIndex,
+                    semanticRefIndex,
+                );
+                break;
+            case "tag":
+                const tag = semanticRef.knowledge as Tag;
+                propertyIndex.addProperty(
+                    PropertyNames.Tag,
+                    tag.text,
                     semanticRefIndex,
                 );
                 break;
@@ -164,6 +189,10 @@ export class PropertyIndex implements IPropertyToSemanticRefIndex {
         } else {
             this.map.set(termText, [semanticRefIndex]);
         }
+    }
+
+    public clear(): void {
+        this.map.clear();
     }
 
     lookupProperty(

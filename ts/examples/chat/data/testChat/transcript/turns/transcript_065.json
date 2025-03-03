@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " Yeah, and which was – and which basically put up an extremely spirited and quite aggressive defense of itself, when challenged, and grew more and more effectively aggressive in the way that it was interacting when its interlocutor was trying to pick apart its story. \n \nAnd what really struck me there is – what you’ve got there is a system that’s basically being told, well, react like you’re a human, effectively. It’s being asked human level questions. It’s being asked to react like it’s human. The human it’s reacting like is, effectively, a certain type of online actor who, when challenged, becomes extremely aggressive and answers questions with abuse, and tries to shut down any lines of inquiry that it doesn’t like.  \n \nSo, really, that’s just Bing Chat being a very good human. And the problem is people don’t like it when we see non-human things acting in that human manner. And we overlook the fact that they’re doing it because we’ve told them to be human. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

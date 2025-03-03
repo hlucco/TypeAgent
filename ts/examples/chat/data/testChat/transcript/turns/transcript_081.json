@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " And, you know, role playing games, board games. And beyond that, I draw and I paint Warhammer miniatures, which are both very good sort of de-stressing activities for me. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

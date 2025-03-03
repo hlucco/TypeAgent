@@ -1,0 +1,9 @@
+{
+  "speaker": "CHRISTINA WARREN",
+  "speech": {
+    "value": " (Laughter.) I know. Well, look, I’m just saying we’ve been waiting a really long time. I’m just saying we’ve been waiting a really long time. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "KEVIN SCOTT"]
+}

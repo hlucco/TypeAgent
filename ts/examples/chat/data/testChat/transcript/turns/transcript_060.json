@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah. I mean, it’s one of the reasons why we think a lot about encouraging forms of AI use where you think about it as a tool, and it’s always augmenting humans. You always have humans in the loop. You know, like the thing that we just described, the only reason that it would happen right now is because there would be some human agency somewhere that decided that this feedback loop that we just described was profitable, or interesting or valuable in some way or the other. And like, you know, there’s some human agency somewhere that is, you know, setting the system up to run this way. \n \nNow, it could be a highly leveraged human agency where, you know, very few people get to make the substantive decisions that, you know, then have a big impact. But, like, I think making sure that you’ve always got some kind of human agency somewhere in the loop is pretty important. (Laughter.) \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

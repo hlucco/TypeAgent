@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " (Laughter.) That’s funny. Cool. And then my very, very last question: So, I ask everyone this. I know you are extremely busy. You know, from the outside, your official job looks like one of the most interesting things in the world. You just sort of get to imagine these beautiful, speculative stories and write them in books, and then have people read them and enjoy them. But I would be curious to know what it is that you do in your spare time, when you’re not writing science fiction books. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

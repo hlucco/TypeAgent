@@ -1,0 +1,9 @@
+{
+  "speaker": "CHRISTINA WARREN",
+  "speech": {
+    "value": " All right. Well, that is all the time that we have for today. A big thanks to Adrian Tchaikovsky for joining us. And if you have anything that you would like to share with us, you can e-mail us anytime at behindthetech@microsoft.com. And you can follow Behind the Tech on your favorite podcast platform, or you can check out full video episodes on YouTube. Thanks so much for tuning in. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "KEVIN SCOTT"]
+}

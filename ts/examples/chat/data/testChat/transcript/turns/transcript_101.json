@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Or like, at least, you know, portrayals of future landscapes that I myself would want to occupy. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah, 100%. I think, you know, in a way, the dystopian stories are the easier ones to write because, like, that fear of the unknown, the fear of the uncertainty the technological change brings is probably a more visceral emotion than optimism and hope. But what I hope is, like, we’re going to see some, like, really interesting, hopeful takes, like, not Pollyanna ones, but, like, hopeful takes about, you know, like, what – you know, what can happen now that some of this stuff is, you know, has gone from, you know, after decades and decades, like, completely science fictional to like, oh, holy crap, like, some of this stuff’s now real, and it looks like more is coming. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

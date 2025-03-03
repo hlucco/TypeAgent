@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah, that is certainly true. I mean, it’s one of the hard problems in the AI field right now, is the benchmarks that we’ve had for a very long time are no longer super useful in measuring or characterizing the performance of the systems. And everybody’s sort of racing for a new set of benchmarks right now.  \n \nI’m sort of interested in some of the non-Corvid characters in Children of Time, because, you know, one of the extraordinary things I think you did in that book is there were these two characters in the book – and again, I will try not to give too much away – one which is even less human than, you know, than the Corvids or the Portids, you know, this… you know, basically parasitical entity that, you know, that you introduced in Children of Ruin. And then there’s this simulated character that just never even existed outside of a simulation.  \n \nAnd you write these characters in such a way that, like, I was actually in tears twice at the end of the book, because you had somehow or another made me care so much about the emotional state of these characters. And so, I wonder, I mean, like, A, how you thought about doing that. Was that a deliberate thing that you were going for, is, you know, like, how do you sort of take these non-human things and invest them with qualities that humans would, like, just really care about in a deep way?  \n \nAnd, like, what does that mean for these systems that we’re building right now, which are, you know, also non-human and… you know, maybe not so much different from, you know, some of these alien things that you – you’ve been describing? (Laughter.) ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

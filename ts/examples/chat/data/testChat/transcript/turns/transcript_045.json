@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " I mean, looking at the… I mean, it’s worth noting, the old – the old science fiction writers are generally not terribly good at telling you what will happen in the future, but they’re very good at commenting on what is happening now. And with that in mind, I think the problem we’re going to see with this sort of in inverted commas “AI style program” is: it is very good at certain tasks. It is not, like I say, it is not very good without a very sort of specialist handling system, good at other tasks, which require awareness of context, because it has literally no awareness of context.  \n \nBut what it is also very good at is producing a vast quantity of whatever you want, very, very economically. And because of that, it’s going to get used in all sorts of circumstances where it honestly doesn’t belong. It’s going to get used to write journalistic articles by the tens of thousands. And some of those may well – you know, hopefully, the majority of those may well end up being accurate because of the dataset, because the datasets that they are drawing on basically, sort of will bottleneck it into accuracy. But that’s not necessarily guaranteed.  \n \nAnd certainly, whenever you’re writing an article on something where there is a difference of opinion, I think that it’s a profoundly dangerous thing to just sign over to an AI.  \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

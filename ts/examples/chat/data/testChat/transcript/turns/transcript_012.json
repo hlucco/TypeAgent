@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " All right. So, Adrian Tchaikovsky is an award-winning science fiction and fantasy author based in the UK. He studied zoology and psychology at the University of Reading and is deeply interested in the animal world, specifically insects. His first novel, Empire in Black and Gold, was published in 2008.  \n \nToday, he’s known best for his series, Shadows of the Apt and Children of Time. I am eagerly awaiting the arrival of book three of his Final Architecture Trilogy, Lords of Uncreation, which will soon be released.  \n \nAdrian, thank you so much for being on the show today. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

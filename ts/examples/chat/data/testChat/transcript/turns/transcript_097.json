@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah, I totally agree. And I think, you know, the thing everyone should expect is, like, either AI is going to be important, in which case, like, we absolutely will figure out how to make it be a beneficial thing for everyone, by definition, like, that’s what’s required of it becoming a ubiquitous thing. Like, it has to do something useful and meaningful that serves human interests.  \n \nYeah, like, we – if you think about electricity, for instance, like, we have tons of accidental deaths by electrocution every year. Like, we would completely abolish all of electricity, if it didn’t have, like, this overwhelming overhang of, like, beneficial uses, in addition to, you know, this small, but, like, very real set of harms that you have to go, like, build safety mechanisms around and, you know, regulation and a whole bunch of stuff.  \n \nAnd so, like, either, that’s what we’re going to get to, like, we will have AI being like electricity, a ubiquitous beneficial thing that, you know, has its risks regulated and mitigated down to, you know, some kind of acceptable level, relative to all the benefits it provides, or it’s just going to, like, fade away. Like, it’ll be sort of like crypto, right? \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

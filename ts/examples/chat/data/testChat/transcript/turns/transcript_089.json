@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah, I don’t know. I mean, he said, the – like, this really important thing that I think is true. So, sci-fi authors, good ones, at least, rarely are trying to exactly predict the future. And in fact –  \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

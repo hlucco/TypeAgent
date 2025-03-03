@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " That’s awesome. Super, super cool, very, very cool. Thank you so much for taking time to chat with us today. This has been a fascinating conversation. And, like, I just want you to know, as a fan, that I really appreciate what you do. And you may not realize how much influence your work has even on the work that folks like me do. Like, it really does help us, like, think about how we’re shaping the things that we do.  \n \nAnd, like, the reason I’m a computer scientist and an engineer is because of science fiction authors who inspired me about, you know, like, an amazing future that we might all have, when I was a little kid. So, like, I really do appreciate the thing that you’re doing.  \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

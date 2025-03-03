@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " Thank you.  \n \n[MUSIC] \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

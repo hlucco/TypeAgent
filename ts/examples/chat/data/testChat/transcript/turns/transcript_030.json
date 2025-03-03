@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah. I mean, I think a really good example of this are the Portids from the Children of Time, which are the spiders who are the… you know, become the protagonists of the story. And, you know, I don’t want to give too much away about the book, for folks who haven’t read it, but you basically develop this very complicated society of intelligent spiders, and, which is a really interesting premise. And, like, part of what makes them so compelling is that their sensorium is very different from humans. You want to talk about that a little bit? \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " I mean, honestly, the weird thing, it… I’m always fascinated by the concept of genuine artificial intelligence in the sense of actually strong, sort of, fully sort of meaning-aware artificial intelligence arising emergently. And that kind of battlefield might almost be the sort of place where it would, because all of these things that – you know, it wouldn’t just be the case of, oh, well, our thing isn’t working, let’s build another one. The thing will be designed to refine its own abilities as the arms race went on.  \ne \nSo, every single person’s search engine or content production engine would be constantly evolving itself. And that is kind of – you’re then getting into the genuine, full-on science fiction, AI sort of scenario. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

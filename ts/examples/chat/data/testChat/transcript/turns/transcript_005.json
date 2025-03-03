@@ -1,0 +1,9 @@
+{
+  "speaker": "CHRISTINA WARREN",
+  "speech": {
+    "value": " And we have a fascinating guest with us today. Adrian Tchaikovsky is a sci-fi author who’s written dozens of books, and he’s won many awards for his writing. He’s prolific, but is probably most famous for two of his series, Shadows of the Apt and Children of Time. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "KEVIN SCOTT"]
+}

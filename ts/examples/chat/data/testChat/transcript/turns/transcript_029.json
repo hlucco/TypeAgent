@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " I mean, when I’m working from the point of view of a non-human entity, whether it’s a sort of an uplifted animal, or an alien or something like that, it’s generally the start point is the input. So, you look at what senses it has, how it experiences the world around it, and that then – that gives you a very good filter through which to look at the world and interpret the things that are going on around this particular character. It gives it its own sort of set of priorities that can be quite different to human, because we’re very limited to our senses. I mean, that – our entire picture of what goes on around us is fed to us through the various ways that we sense our environment.  \n \nAnd when those ways go wrong, or when those ways are giving us uncertain information, you can get some sort of profoundly weird and dysfunctional worldviews generating from that, which can be extremely hard to dissuade someone from, even if – even if you knew that you had a problem, which meant that, you know, you were seeing things, you were hallucinating. That doesn’t necessarily mean that the hallucinations aren’t themselves still incredibly powerful.  \n \nI mean, it’s very hard not to react to a thing that your eyes are telling you is there. I mean, sleep paralysis is a perfect example of that, because most people who have it are well aware of what’s going on when it’s happening, but that doesn’t make it any less scary. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

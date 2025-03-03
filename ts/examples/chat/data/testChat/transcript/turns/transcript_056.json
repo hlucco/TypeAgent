@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah, and the question there is whether or not that will be easier or harder to deal with than the current arms race that you already have. So, with, like – with search engines for the past 20 years, like, you also have search engine optimization where, you know, people who have some kind of economic interest in you clicking through to a particular search result do all sorts of crazy things to get their content featured highly for particular queries. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

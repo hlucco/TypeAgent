@@ -1,0 +1,9 @@
+{
+  "speaker": "CHRISTINA WARREN",
+  "speech": {
+    "value": " Wow, what an interesting conversation with Adrian Tchaikovsky. So, I wanted to talk to you a little bit more, Kevin, as we mentioned at the top, Adrian is really prolific writer. But when he started writing his most recent book, he mentioned, you know, like, things like ChatGPT weren’t even available yet.  \n \nAnd when I think about, like, the last six months of just what’s happened in generative AI in the consumer space, so just the stuff that we see, not even all the research and things that are happening, that – a lot of the stuff that we’re seeing now could have feasibly seemed like science fiction, a decade ago.  \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "KEVIN SCOTT"]
+}

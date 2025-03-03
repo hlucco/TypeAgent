@@ -169,7 +169,19 @@ async function attachAttachments(
 
     if (attachments && attachments.length > 0 && pp) {
         for (let i = 0; i < attachments.length; i++) {
-            pp.unshift(await addImagePromptContent("user", attachments[i]));
+            pp.unshift(
+                (
+                    await addImagePromptContent(
+                        "user",
+                        attachments[i],
+                        true,
+                        true,
+                        false,
+                        true,
+                        true,
+                    )
+                ).promptSection!,
+            );
         }
     }
 }
@@ -209,8 +221,8 @@ export function createJsonTranslatorFromSchemaDef<T extends object>(
 
 export interface TypeAgentJsonValidator<T extends object>
     extends TypeChatJsonValidator<T> {
-    getSchemaText: () => string;
-    getTypeName: () => string;
+    getSchemaText(): string;
+    getTypeName(): string;
     validate(jsonObject: object): Result<T>;
     getJsonSchema?: () => CompletionJsonSchema | undefined;
 }

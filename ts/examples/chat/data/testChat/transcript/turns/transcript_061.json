@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " I think the problem you’d get eventually is that everyone would assume that the other person was the one supplying that human agency, especially given how good these things are already at feigning being a human agency. I mean, you know, the Turing test is way behind us in the rearview mirror at this point.  \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

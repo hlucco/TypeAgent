@@ -1,0 +1,922 @@
+{
+  "totalStats": {
+    "timeMs": 1180438.8544589994,
+    "charCount": 72234,
+    "tokenStats": {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "total_tokens": 0
+    }
+  },
+  "itemStats": [
+    {
+      "timeMs": 8982.333999999973,
+      "charCount": 55,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 16496.459915999993,
+      "charCount": 707,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 11675.06033399998,
+      "charCount": 493,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 13817.276374999987,
+      "charCount": 105,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 6386.486333000008,
+      "charCount": 21,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 9917.363000000012,
+      "charCount": 299,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 9805.136874999997,
+      "charCount": 1106,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 11196.650041999994,
+      "charCount": 994,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 9712.55795800002,
+      "charCount": 24,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 15032.569292,
+      "charCount": 706,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 5075.271125000028,
+      "charCount": 29,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 12387.33679099998,
+      "charCount": 168,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 21657.91849999997,
+      "charCount": 1734,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 4109.692500000005,
+      "charCount": 36,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 8094.1951250000275,
+      "charCount": 98,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 16141.69537500001,
+      "charCount": 113,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 18299.31354199996,
+      "charCount": 683,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 10361.225791000004,
+      "charCount": 649,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 23217.659875000012,
+      "charCount": 2307,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 22522.84483300004,
+      "charCount": 1260,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 8081.098250000039,
+      "charCount": 1541,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 6999.654125000001,
+      "charCount": 5,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 12915.050292,
+      "charCount": 606,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 8424.724750000052,
+      "charCount": 1046,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 11483.566332999966,
+      "charCount": 1414,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 13955.082208000007,
+      "charCount": 1415,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 10259.677375000028,
+      "charCount": 2421,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 24457.679915999994,
+      "charCount": 1942,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 14461.272500000021,
+      "charCount": 2378,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 7188.931791999959,
+      "charCount": 16,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 10573.75762499997,
+      "charCount": 452,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 15036.575540999998,
+      "charCount": 378,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 13774.875166999991,
+      "charCount": 1573,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 7186.203458000091,
+      "charCount": 27,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 9649.392166000092,
+      "charCount": 465,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 17382.17254099995,
+      "charCount": 334,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 12512.853374999948,
+      "charCount": 1028,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 9105.948958000052,
+      "charCount": 251,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 18829.338416999904,
+      "charCount": 2164,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 6012.9563330000965,
+      "charCount": 234,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 10260.590124999988,
+      "charCount": 196,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 5534.506042000023,
+      "charCount": 6,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 13743.977125000092,
+      "charCount": 568,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 7458.011582999956,
+      "charCount": 223,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 19365.848666999955,
+      "charCount": 2822,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 8998.545333000016,
+      "charCount": 43,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 26881.51912499999,
+      "charCount": 1805,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 5748.643541999976,
+      "charCount": 217,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 4024.388874999946,
+      "charCount": 23,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 14001.206708000042,
+      "charCount": 570,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 15208.06937500008,
+      "charCount": 1030,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 7604.986833999981,
+      "charCount": 8,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 10260.486874999944,
+      "charCount": 3454,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 6180.57491700002,
+      "charCount": 8,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 29895.115290999995,
+      "charCount": 1018,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 11202.407541000051,
+      "charCount": 637,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 20090.655875000055,
+      "charCount": 1401,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 5934.555792000028,
+      "charCount": 290,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 14789.086167000001,
+      "charCount": 3358,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 10268.998666999978,
+      "charCount": 5,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 22906.584833000088,
+      "charCount": 1572,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 13042.125084000058,
+      "charCount": 1110,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 20531.20745799993,
+      "charCount": 2360,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 13039.634958000039,
+      "charCount": 750,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 8916.296208000043,
+      "charCount": 2411,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 16991.62720800005,
+      "charCount": 717,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 14244.36454199988,
+      "charCount": 2713,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 6797.931249999907,
+      "charCount": 219,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 13996.733666999964,
+      "charCount": 366,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 16935.61770900013,
+      "charCount": 266,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 9410.093209000072,
+      "charCount": 235,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 14774.905250000069,
+      "charCount": 219,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 4989.555791999912,
+      "charCount": 37,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 8032.326333000092,
+      "charCount": 631,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 10128.613374999957,
+      "charCount": 820,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 3266.324832999846,
+      "charCount": 7,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 31450.782541999826,
+      "charCount": 301,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 3647.430042000022,
+      "charCount": 14,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 7318.212041999912,
+      "charCount": 170,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 7675.643749999814,
+      "charCount": 5,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 9191.87412500009,
+      "charCount": 182,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 9687.586917000124,
+      "charCount": 5,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 3823.754834000021,
+      "charCount": 38,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 11104.045165999793,
+      "charCount": 1831,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 8648.846583999926,
+      "charCount": 1148,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 3879.962999999989,
+      "charCount": 7,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 8673.496500000125,
+      "charCount": 14,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 15215.272832999937,
+      "charCount": 1009,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 10097.307083999971,
+      "charCount": 315,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 7192.493249999825,
+      "charCount": 7,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 10825.282292000018,
+      "charCount": 891,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 4123.255416000029,
+      "charCount": 8,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 18535.302875000052,
+      "charCount": 254,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 2563.3250840001274,
+      "charCount": 7,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 2409.612959000049,
+      "charCount": 109,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 8023.111792000011,
+      "charCount": 6,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 12977.630082999822,
+      "charCount": 541,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 13165.070542000001,
+      "charCount": 1583,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 9349.079541999847,
+      "charCount": 7,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 17426.86795799993,
+      "charCount": 371,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "timeMs": 4797.632374999812,
+      "charCount": 19,
+      "tokenStats": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0,
+        "total_tokens": 0
+      }
+    }
+  ]
+}

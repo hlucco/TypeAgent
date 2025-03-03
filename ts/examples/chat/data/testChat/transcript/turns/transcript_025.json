@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " In retrospect, yes. I mean, the thing is, every book I wrote was slightly better than the previous one. I was, at the time, convinced I was writing incredibly publishable books, but I’ve gone back into that, sort of that back catalogue. And I’ve been able to save two books, the two books from before. The two directly before Empire in Black and Gold, I’ve been able to rewrite and they’re now in print.  \n \nThe books before that would be too much work to salvage. And it was quite an eye opener to go back and see all of that time when I basically was being very bitter about not getting picked up by the publishing industry. It was because the stuff I was submitting was not good enough. And I – you couldn’t have told me at the time. I basically had to come to that realization myself. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

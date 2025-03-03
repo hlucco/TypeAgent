@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " So, we always start these interviews by asking our guests how they got into the careers that they’re in. And you had several steps along yours, so I’m just sort of curious about, you know, what your childhood was like, how you got interested in the things you got interested in and how that led to you being a science fiction writer. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

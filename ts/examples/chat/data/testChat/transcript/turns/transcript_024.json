@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " So, I imagine some people hearing this might imagine that it was incredibly frustrating to, you know, write a book a year and have rejection after rejection. And I’m sure it was, but I’m sort of curious to hear what you learned from that whole process, because it also sounds like it might have been incredibly good practice for what you do right now. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

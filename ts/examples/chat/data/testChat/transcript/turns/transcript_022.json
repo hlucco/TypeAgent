@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " And so, while you were – while you were pursue – well, maybe I shouldn’t say pursuing this career, legal. While you were working in the legal profession, you were writing books and trying to get them published? \n \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

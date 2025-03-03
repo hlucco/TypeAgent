@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " And this is why an artificial intelligence, even one that we’d given a very human face for, would be, at heart, something far, far more alien to us than a spider or an octopus or a crow, or anything that we’re familiar with, really, because it doesn’t have those wants. And even a spider has a drive to preserve itself. Even a spider will try and evade a threat. But you – if you have a robot there and you’ve not specifically told it otherwise, it will just let someone punch it in the face. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

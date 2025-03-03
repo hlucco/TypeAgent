@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " And so, I’m just sort of curious, like, how did you get better, because I’m guessing the rejections from the publishing companies were sort of terse and unhelpful. What helped you actually make one book better than the last? \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

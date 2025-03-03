@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " Oh, I mean, that’s very, very kind of you. I mean, I don’t know how much of it is just historically, with writers like Clarke, that we just have a tradition, which is given a certain amount of weight, whether we necessarily deserve it or not. I don’t know if it’s just because our – the island that we are currently on is so completely mad that we’re all desperate to escape. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

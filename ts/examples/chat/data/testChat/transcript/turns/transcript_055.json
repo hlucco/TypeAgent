@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " And you’d get a lot of – you know, you’d get the genuine sites trying to kind of show that they were genuine, and you would get an awful lot of mimicry, mimicry killers, really, like the flies that dress up as wasps, because they will be trying to look like the genuine thing in order to get your butler, so to speak, to click on them. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

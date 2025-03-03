@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " We were – we played quite a few that were kicking around in the, it would be ‘80s, early ‘90s. And Dungeons and Dragons was definitely the main one, which was, I suspect, a common experience for most people at the time.  \n \nOne of the things, my role was, as often as not, I was running the game, which meant creating the world and creating many, many characters, and sort of portraying characters in a fairly quickfire fashion for the other players. And this turned out to be an enormously useful sort of skillset for writing fantasy and science fiction novels, because the same kind of world creating, the same presentation of characters just crosses over very neatly from one to another. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

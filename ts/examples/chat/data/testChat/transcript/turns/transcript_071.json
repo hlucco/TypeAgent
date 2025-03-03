@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " Makes a lot of sense to us as humans, but it doesn’t make any sense to, necessarily to Skynet as a computer. Why would the AI care if it was no longer doing stuff? It doesn’t necessarily have an innate drive to preserve its own existence, unless we’ve given it one. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

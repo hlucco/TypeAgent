@@ -1,0 +1,9 @@
+{
+  "speaker": "CHRISTINA WARREN",
+  "speech": {
+    "value": " Oh, yeah. I mean, The Circle was a decade ago, and that was similar, but go on. Sorry. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "KEVIN SCOTT"]
+}

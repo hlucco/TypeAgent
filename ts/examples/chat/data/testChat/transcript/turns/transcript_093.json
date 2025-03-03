@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Because, you know, the humans decided that humans and AIs couldn’t coexist, all the way to Iain Banks, whose Culture universe is completely predicated on the existence of, like, these almost godlike AIs who, like, basically give human beings a post-scarcity society and, you know, like, basically freedom from, like, any suffering or harm that you don’t go seek out yourself.  \n \nAnd so, like, I think science fiction is always this useful inspiration to, like, show you what the palette of options are, as you are thinking about what futures could look like. And it’s hard for me to say, you know, like, what things like ChatGPT are going to do for the science fiction books that are going to come out over the next few years. I would guess you’re going to see some both anxious and optimistic books. Like, and it’s pretty obvious, like, what the anxious books would be. And, you know, like, there’s a bunch of dystopian things that you could do.  \n \nWhat I hope, though –  \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

@@ -8,8 +8,8 @@ import {
     readExplanationTestData,
     getSchemaNamesForActionConfigProvider,
     createActionConfigProvider,
-    getInstanceDir,
 } from "agent-dispatcher/internal";
+import { getInstanceDir } from "agent-dispatcher/helpers/data";
 import {
     getDefaultAppAgentProviders,
     getDefaultConstructionProvider,
@@ -125,9 +125,25 @@ export default class TestTranslateCommand extends Command {
             description: "Validate the output when JSON schema is enabled",
             default: true, // follow DispatcherOptions default
             allowNo: true,
-            relationships: [
-                { type: "some", flags: ["jsonSchema", "jsonSchemaFunction"] },
-            ],
+        }),
+        schemaOptimization: Flags.boolean({
+            description: "Enable schema optimization",
+        }),
+        switchEmbedding: Flags.boolean({
+            description: "Use embedding to determine the first schema to use",
+            default: true, // follow DispatcherOptions default
+            allowNo: true,
+        }),
+        switchInline: Flags.boolean({
+            description: "Use inline switch schema to select schema group",
+            default: true, // follow DispatcherOptions default
+            allowNo: true,
+        }),
+        switchSearch: Flags.boolean({
+            description:
+                "Enable second chance full switch schema to find schema group",
+            default: true, // follow DispatcherOptions default
+            allowNo: true,
         }),
         stream: Flags.boolean({
             description: "Enable streaming",
@@ -292,9 +308,6 @@ export default class TestTranslateCommand extends Command {
             countStr = `${requests.length}/${countStr}`;
         }
 
-        const schemas = flags.schema
-            ? Object.fromEntries(flags.schema.map((name) => [name, true]))
-            : undefined;
         let failedTotal = 0;
         let noActions = 0;
         let processed = 0;
@@ -317,9 +330,11 @@ export default class TestTranslateCommand extends Command {
         async function worker() {
             const dispatcher = await createDispatcher("cli test translate", {
                 appAgentProviders: defaultAppAgentProviders,
-                schemas,
-                actions: null,
-                commands: { dispatcher: true },
+                agents: {
+                    schemas: flags.schema,
+                    actions: false,
+                    commands: ["dispatcher"],
+                },
                 translation: {
                     stream: flags.stream,
                     history: { enabled: false },
@@ -331,6 +346,14 @@ export default class TestTranslateCommand extends Command {
                             jsonSchemaFunction: flags.jsonSchemaFunction,
                             jsonSchemaValidate: flags.jsonSchemaValidate,
                         },
+                        optimize: {
+                            enabled: flags.schemaOptimization,
+                        },
+                    },
+                    switch: {
+                        embedding: flags.switchEmbedding,
+                        inline: flags.switchInline,
+                        search: flags.switchSearch,
                     },
                 },
                 explainer: { enabled: false },

@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " So, I was always a very keen reader from a very early age. But a lot of my creative impulses went into role playing games when I was a teenager. And then I came across a set of books called the Dragonlance Chronicles, which were basically someone’s role playing Dungeons and Dragons campaign turned into novels. And that just – that was the light bulb moment for me. That kind of drew the line between where I was and being a published author, because these people were very much my kind of people doing my kind of thing.  \n \nAnd it was quite a long road from there. It was about 15 years of trying to get published and not getting anywhere, and kind of honing my style as an author. But that was very much the just that, the moment the door opened for me. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

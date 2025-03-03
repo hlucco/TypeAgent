@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " And we, ourselves, are quite capable of creating on the spot, completely fictitious reasons, justification for our actions, which we then absolutely defend. So, we have this idea of ourselves as a coherent, singular, thinking entity, and it might be a bizarre artifact of the way our brains have evolved. The whole – I mean, this is something – Peter Watts is another author that’s certainly written on this subject, the whole idea of consciousness, which we tend to think of as the be-all and end-all of intelligent life could just kind of be a side effect. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

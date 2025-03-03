@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah, you may be right. I mean, it’s one of the fascinating things about where we are with the technology, is I think it’s hard for those of us developing it to fully anticipate what exactly the uses are that people are going to put the technology to, because, I mean, one of – you know, as an engineer, the fascinating thing about the technology is it’s really a platform. So, you can use it to do medical diagnosis.  \n \nAnd, like, there are ways actually to sort of render, you know, specific things, like medical diagnosis, like, very accurate, where the – you know, hallucinations that the system makes, because you’re sort of grounding it in a database of medical facts, are actually more accurate than a human who also has, you know, faulty memory and, you know, weird recall mechanisms and whatnot.  \n \nBut, you know, they’re just a whole bunch of things people are going to do with this technology that is hard for us to imagine. And it’s one of the reasons why I think it’s so interesting to have folks like you thinking about it, because, you know, your job is speculating in, like, really comprehensive ways about what the future is going to look like.  \n \nI was sort of wondering, like, you know, along those lines, like, what your… like, do you have any predictions about where you think things are going? \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

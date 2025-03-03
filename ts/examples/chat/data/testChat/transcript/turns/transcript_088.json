@@ -1,0 +1,9 @@
+{
+  "speaker": "CHRISTINA WARREN",
+  "speech": {
+    "value": " So, as a sci-fi fan, and based on the conversation with Adrian, I kind of wanted to know, like, what are your thoughts about how this burgeoning wave of technology that we have upon us right now might be able to impact, I guess, maybe what future AI, you know, sci-fi novels look like? \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "KEVIN SCOTT"]
+}

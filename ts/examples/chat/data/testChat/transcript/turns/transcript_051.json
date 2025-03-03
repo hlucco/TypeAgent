@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " The the logical corollary of the sort of model you’re talking about is that, well, actually we’re not going to be doing our own searching. We’re going to be getting our robot butlers, effectively, to do are searching for us based on our parameters.  \n \nAnd so, what all of those clickbait headlines will eventually be optimized for is there’ll be optimized for the robot butlers.  \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

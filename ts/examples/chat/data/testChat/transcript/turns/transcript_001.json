@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " I’d write, I’d submit, I get it knocked back, I’d go off and write another one. And basically, I turned out a book, an unsuccessful book a year for about 15 years. \n \n[MUSIC] \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

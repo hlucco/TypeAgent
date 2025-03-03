@@ -1,0 +1,9 @@
+{
+  "speaker": "CHRISTINA WARREN",
+  "speech": {
+    "value": " Yeah, no, I agree. I hope that we can see something that is maybe a little more balanced. I agree with you, I think that it’s easy to do the more, you know, dystopian take. And, look, dystopia is a key part of sci-fi, right? Like, it’s an important component with it. \n \nBut I do wonder, I guess, and it was so interesting having you talk with Adrian, but I do think about what happens when these things that we thought were really far out and were never even really within the realm of possibility, because as you say, authors aren’t trying to really predict the future, when those things do start to take shape, it’s exciting to think about what imagination is going to, you know, come up with in the future that is not within our technological sightlines. I think that’s a really fascinating thing to think about. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "KEVIN SCOTT"]
+}

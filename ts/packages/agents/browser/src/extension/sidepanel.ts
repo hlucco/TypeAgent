@@ -4,52 +4,59 @@
 let recording = false;
 let recordedActions: any[] = [];
 
-function requestSchemaUpdate() {
+async function requestSchemaUpdate() {
     const schemaAccordion = document.getElementById(
         "schemaAccordion",
     ) as HTMLDivElement;
-    // const schemaText = document.getElementById("schemaText")!;
-    // schemaText.textContent = "Loading...";
     schemaAccordion.innerHTML = "<p>Loading...</p>";
 
-    chrome.runtime.sendMessage({ type: "refreshSchema" }, (response) => {
-        if (chrome.runtime.lastError) {
-            console.error("Error fetching schema:", chrome.runtime.lastError);
-            return;
-        }
-
-        if (response && response.schema && response.schema.actions) {
-            schemaAccordion.innerHTML = "";
-
-            response.schema.actions.forEach((action: any, index: number) => {
-                const { actionName, parameters } = action;
-                const paramsText = parameters
-                    ? JSON.stringify(parameters, null, 2)
-                    : "{}";
-
-                const accordionItem = document.createElement("div");
-                accordionItem.classList.add("accordion-item");
-
-                accordionItem.innerHTML = `
-                    <h2 class="accordion-header" id="heading${index}">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                            data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
-                            ${actionName}
-                        </button>
-                    </h2>
-                    <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#schemaAccordion">
-                        <div class="accordion-body">
-                            <pre><code class="language-json">${paramsText}</code></pre>
-                        </div>
-                    </div>
-                `;
-
-                schemaAccordion.appendChild(accordionItem);
-            });
-        } else {
-            schemaAccordion.innerHTML = "<p>No schema found.</p>";
-        }
+    const response = await chrome.runtime.sendMessage({
+        type: "refreshSchema",
     });
+    if (chrome.runtime.lastError) {
+        console.error("Error fetching schema:", chrome.runtime.lastError);
+        return;
+    }
+
+    renderSchemaResults(response);
+}
+
+function renderSchemaResults(response: any) {
+    const schemaAccordion = document.getElementById(
+        "schemaAccordion",
+    ) as HTMLDivElement;
+
+    if (response && response.schema && response.schema.actions) {
+        schemaAccordion.innerHTML = "";
+
+        response.schema.actions.forEach((action: any, index: number) => {
+            const { actionName, parameters } = action;
+            const paramsText = parameters
+                ? JSON.stringify(parameters, null, 2)
+                : "{}";
+
+            const accordionItem = document.createElement("div");
+            accordionItem.classList.add("accordion-item");
+
+            accordionItem.innerHTML = `
+                <h2 class="accordion-header" id="heading${index}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                        ${actionName}
+                    </button>
+                </h2>
+                <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#schemaAccordion">
+                    <div class="accordion-body">
+                        <pre><code class="language-json">${paramsText}</code></pre>
+                    </div>
+                </div>
+            `;
+
+            schemaAccordion.appendChild(accordionItem);
+        });
+    } else {
+        schemaAccordion.innerHTML = "<p>No schema found.</p>";
+    }
 }
 
 function copySchemaToClipboard() {
@@ -64,49 +71,65 @@ function copySchemaToClipboard() {
     });
 }
 
-function registerTempSchema() {
-    const schemaText = document.getElementById("schemaText")!;
-    schemaText.textContent = "Loading...";
+async function registerTempSchema() {
+    const schemaAccordion = document.getElementById(
+        "schemaAccordion",
+    ) as HTMLDivElement;
+    schemaAccordion.innerHTML = "<p>Loading...</p>";
 
-    chrome.runtime.sendMessage({ type: "registerTempSchema" }, (response) => {
-        if (chrome.runtime.lastError) {
-            console.error("Error fetching schema:", chrome.runtime.lastError);
-            return;
-        }
-
-        if (response && response.schema) {
-            schemaText.textContent = JSON.stringify(response.schema, null, 2);
-        } else {
-            schemaText.textContent = "Failed to fetch schema.";
-        }
+    const response = await chrome.runtime.sendMessage({
+        type: "registerTempSchema",
     });
+    if (chrome.runtime.lastError) {
+        console.error("Error fetching schema:", chrome.runtime.lastError);
+        return;
+    }
+
+    renderSchemaResults(response);
 }
 
 function toggleActionForm() {
     const form = document.getElementById("actionForm")!;
     form.classList.toggle("hidden");
+    if (form.classList.contains("hidden")) {
+        (document.getElementById("actionName") as HTMLInputElement)!.value = "";
+        (document.getElementById(
+            "actionDescription",
+        ) as HTMLTextAreaElement)!.value = "";
+        document.getElementById("stepsTimelineContainer")!.innerHTML = "";
+    }
 }
 
 // Function to save user-defined actions
 async function saveUserAction() {
-    const actionName = (
-        document.getElementById("actionName") as HTMLInputElement
-    ).value.trim();
     const actionDescription = (
         document.getElementById("actionDescription") as HTMLTextAreaElement
     ).value.trim();
 
-    if (!actionName) {
-        alert("Action name is required!");
-        return;
-    }
+    const nameField = document.getElementById("actionName") as HTMLInputElement;
+    const actionName =
+        nameField.value != undefined
+            ? nameField.value.trim()
+            : prompt("Enter a name for this action:");
+
+    const stepsContainer = document.getElementById("stepsTimelineContainer")!;
+    const steps = JSON.parse(stepsContainer.dataset.steps || "[]");
+
+    const screenshot = JSON.parse(stepsContainer.dataset.screenshot || "");
+    const html = JSON.parse(stepsContainer.dataset.html || "");
 
     // Retrieve existing actions from localStorage
     const storedActions = localStorage.getItem("userActions");
     const actions = storedActions ? JSON.parse(storedActions) : [];
 
     // Add new action
-    actions.push({ name: actionName, description: actionDescription });
+    actions.push({
+        name: actionName,
+        description: actionDescription,
+        steps,
+        screenshot,
+        html,
+    });
 
     // Save back to localStorage
     localStorage.setItem("userActions", JSON.stringify(actions));
@@ -118,16 +141,16 @@ async function saveUserAction() {
 
 // Function to update user actions display
 async function updateUserActionsUI() {
-    showRecordedActionScreenshot();
-    await showRecordedActionsTimeline();
+    await showUserDefinedActionsList();
 }
 
 function startRecording() {
     chrome.runtime.sendMessage({ type: "startRecording" });
-    alert("Recording started! Perform actions on the main page.");
-
     document.getElementById("recordAction")!.classList.add("hidden");
     document.getElementById("stopRecording")!.classList.remove("hidden");
+    document.getElementById("stepsTimelineContainer")!.dataset.steps = "";
+    document.getElementById("stepsTimelineContainer")!.dataset.screenshot = "";
+    document.getElementById("stepsTimelineContainer")!.dataset.html = "";
 }
 
 // Function to stop recording
@@ -137,18 +160,35 @@ async function stopRecording() {
     });
 
     if (response && response.recordedActions) {
-        const nameField = document.getElementById(
-            "actionName",
-        ) as HTMLInputElement;
-        const actionName =
-            nameField.value != undefined
-                ? nameField.value
-                : prompt("Enter a name for this action:");
-        if (actionName) {
-            saveRecordedUserAction(actionName, response.recordedActions);
-            showRecordedActionScreenshot();
-            await showRecordedActionsTimeline();
-        }
+        const stepsContainer = document.getElementById(
+            "stepsTimelineContainer",
+        )!;
+        stepsContainer.classList.remove("hidden");
+        stepsContainer.dataset.steps = JSON.stringify(response.recordedActions);
+        stepsContainer.dataset.screenshot = JSON.stringify(
+            response.recordedActionScreenshot,
+        );
+        stepsContainer.dataset.html = JSON.stringify(
+            response.recordedActionHtml,
+        );
+
+        const actionDescription = (
+            document.getElementById("actionDescription") as HTMLTextAreaElement
+        ).value.trim();
+
+        const actionName = (
+            document.getElementById("actionName") as HTMLInputElement
+        ).value.trim();
+
+        renderTimelineSteps(
+            actionName,
+            actionDescription,
+            response.recordedActions,
+            stepsContainer,
+            response.recordedActionScreenshot,
+            response.recordedActionHtml,
+            true,
+        );
     }
 
     document.getElementById("recordAction")!.classList.remove("hidden");
@@ -167,19 +207,6 @@ async function cancelRecording() {
     form.classList.add("hidden");
 }
 
-async function saveRecordedUserAction(actionName: string, actions: any[]) {
-    const storedActions = localStorage.getItem("userActions");
-    const userActions = storedActions ? JSON.parse(storedActions) : [];
-
-    userActions.push({ name: actionName, steps: actions });
-
-    // Save to localStorage
-    localStorage.setItem("userActions", JSON.stringify(userActions));
-
-    // Update UI
-    await updateUserActionsUI();
-}
-
 async function clearRecordedUserAction() {
     if (localStorage.getItem("userActions")) {
         localStorage.removeItem("userActions");
@@ -191,46 +218,249 @@ async function clearRecordedUserAction() {
     await updateUserActionsUI();
 }
 
-function showRecordedActionScreenshot() {
-    const screenshotContainer = document.getElementById(
-        "screenshotContainer",
+async function showUserDefinedActionsList() {
+    const userActionsListContainer = document.getElementById(
+        "userActionsListContainer",
     ) as HTMLDivElement;
-    const downloadButton = document.getElementById(
-        "downloadScreenshot",
-    ) as HTMLButtonElement;
-    const downloadHTMLButton = document.getElementById(
-        "downloadHTML",
-    ) as HTMLButtonElement;
 
-    // Fetch the annotated screenshot from storage
-    chrome.runtime.sendMessage(
-        { type: "getAnnotatedScreenshot" },
-        (response) => {
-            if (response) {
-                const img = document.createElement("img");
-                img.src = response;
-                img.alt = "Annotated Screenshot";
-                img.style.width = "100%";
-                img.style.border = "1px solid #ccc";
-                img.style.borderRadius = "8px";
-                screenshotContainer.appendChild(img);
+    // Fetch recorded actions
+    const storedActions = localStorage.getItem("userActions");
+    const actions = storedActions ? JSON.parse(storedActions) : [];
 
-                // Enable the download button
-                downloadButton.style.display = "block";
-                downloadButton.addEventListener("click", () =>
-                    downloadScreenshot(response),
-                );
+    userActionsListContainer.innerHTML = "";
 
-                // Enable download button
-                downloadHTMLButton.style.display = "block";
-                downloadHTMLButton.addEventListener("click", () =>
-                    downloadHTML(response),
-                );
-            } else {
-                screenshotContainer.innerText = "No screenshot available.";
-            }
-        },
+    if (actions !== undefined && actions.length > 0) {
+        actions.forEach((action: any, index: number) => {
+            renderTimeline(action, index);
+        });
+    } else {
+        userActionsListContainer.innerHTML = "<p>No user-defined actions.</p>";
+    }
+}
+
+function renderTimeline(action: any, index: number) {
+    const actionName = action.name;
+
+    const userActionsListContainer = document.getElementById(
+        "userActionsListContainer",
+    )!;
+
+    const timelineHeader = document.createElement("div");
+    timelineHeader.classList.add("accordion-item");
+
+    timelineHeader.innerHTML = `
+                    <h2 class="accordion-header" id="userActionheading${index}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#collapseAction${index}" aria-expanded="false" aria-controls="collapseAction${index}">
+                            ${actionName}
+                        </button>
+                    </h2>
+                    <div id="collapseAction${index}" class="accordion-collapse collapse" aria-labelledby="userActionheading${index}" data-bs-parent="#userActionsListContainer">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <p><i> ${action.description} </i></h6>
+                                    
+                                    <div class="tab-container">
+                                        <ul class="nav nav-tabs" id="sidePanelTabs${index}">
+                                            <li class="nav-item">
+                                            <a class="nav-link active" data-bs-toggle="tab" href="#stepsTab${index}">Steps</a>
+                                            </li>
+                                            <li class="nav-item">
+                                            <a class="nav-link" data-bs-toggle="tab" href="#intentTab${index}">Intent</a>
+                                            </li>
+                                            <li class="nav-item">
+                                            <a class="nav-link" data-bs-toggle="tab" href="#planTab${index}">Plan</a>
+                                            </li>
+                                        </ul>
+                                    <button id="processAction" class="btn btn-sm btn-outline-primary" style="border:0px" title="Process Action">
+                                        <i class="bi bi-robot"></i>
+                                    </button>
+                                    </div>
+
+                                    <!-- Tab Content -->
+                                        <div class="tab-content mt-3">
+                                            <!-- Steps Tab -->
+                                            <div class="tab-pane fade show active" id="stepsTab${index}">
+                                                <div id="Stepscontent"></div>
+                                            </div>
+
+                                            <!-- Intent Tab -->
+                                            <div class="tab-pane fade" id="intentTab${index}">
+                                                <div id="intentContent"></div>
+                                            </div>
+
+                                            <!-- Plan Tab -->
+                                            <div class="tab-pane fade" id="planTab${index}">
+                                                <div id="planContent"></div>
+                                            </div>
+                                        </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+    const stepsContainer = timelineHeader.querySelector(
+        "#Stepscontent",
+    )! as HTMLElement;
+    renderTimelineSteps(
+        action.name,
+        action.description,
+        action.steps,
+        stepsContainer,
+        action.screenshot,
+        action.html,
     );
+
+    const processActionButton = timelineHeader.querySelector(
+        "#processAction",
+    )! as HTMLElement;
+
+    const intentViewContainer = timelineHeader.querySelector(
+        "#intentContent",
+    )! as HTMLElement;
+
+    processActionButton.style.display = "block";
+    processActionButton.addEventListener("click", () =>
+        getIntentFromRecording(
+            action.html,
+            action.screenshot,
+            action.name,
+            action.description,
+            action.steps,
+        ),
+    );
+
+    async function getIntentFromRecording(
+        html: string,
+        screenshot: string,
+        actionName: string,
+        description: string,
+        steps: any[],
+    ) {
+        const response = await chrome.runtime.sendMessage({
+            type: "getIntentFromRecording",
+            html: [{ content: html, frameId: 0 }],
+            screenshot,
+            actionName,
+            description,
+            steps: JSON.stringify(steps),
+        });
+        if (chrome.runtime.lastError) {
+            console.error("Error fetching schema:", chrome.runtime.lastError);
+            return;
+        }
+
+        const card = document.createElement("div");
+        card.innerHTML = `        
+            <pre class="card-text"><code class="language-json">${JSON.stringify(response.schema, null, 2)}</code></pre>
+        `;
+
+        intentViewContainer.appendChild(card);
+    }
+
+    userActionsListContainer.appendChild(timelineHeader);
+}
+
+function renderTimelineSteps(
+    actionName: string,
+    actionDescription: string,
+    steps: any[],
+    userActionsListContainer: HTMLElement,
+    screenshotData: string,
+    htmlData: string,
+    isEditingMode?: boolean,
+) {
+    userActionsListContainer.innerHTML = `
+                    <div id="content">
+                        <ul class="timeline">
+                        </ul>
+                        <div id="stepsScreenshotContainer"></div>
+                    </div>
+                    <div class="d-flex gap-2 mt-3 float-end">
+                        <button id="downloadScreenshot" class="btn btn-sm btn-outline-primary" title="Download Image">
+                            <i class="bi bi-file-earmark-image"></i>
+                        </button>
+                        <button id="downloadHtml" class="btn btn-sm btn-outline-primary" title="Download HTML">
+                            <i class="bi bi-filetype-html"></i>
+                        </button>
+                        <button id="processAction" class="btn btn-sm btn-outline-primary hidden" title="Process Action">
+                            <i class="bi bi-robot"></i>
+                        </button>
+                    </div>
+                `;
+
+    const stepsContainer =
+        userActionsListContainer.querySelector("ul.timeline")!;
+    if (steps != undefined && steps.length > 0) {
+        steps.forEach((step: any, index: number) => {
+            const card = document.createElement("li");
+            card.classList.add("event");
+            card.dataset.date = new Date(step.timestamp).toLocaleString();
+
+            card.innerHTML = `        
+            <h3>${index + 1}. ${step.type}</h3>
+            <p>Details.</p>
+            <pre class="card-text"><code class="language-json">${JSON.stringify(step, null, 2)}</code></pre>
+        `;
+
+            stepsContainer.appendChild(card);
+        });
+    }
+
+    const screenshotContainer = userActionsListContainer.querySelector(
+        "#stepsScreenshotContainer",
+    )!;
+
+    const downloadButton = userActionsListContainer.querySelector(
+        "#downloadScreenshot",
+    )! as HTMLElement;
+
+    const downloadHTMLButton = userActionsListContainer.querySelector(
+        "#downloadHtml",
+    )! as HTMLElement;
+
+    const processActionButton = userActionsListContainer.querySelector(
+        "#processAction",
+    )! as HTMLElement;
+
+    if (screenshotData) {
+        const img = document.createElement("img");
+        img.src = screenshotData;
+        img.alt = "Annotated Screenshot";
+        img.style.width = "100%";
+        img.style.border = "1px solid #ccc";
+        img.style.borderRadius = "8px";
+        screenshotContainer.appendChild(img);
+
+        // Enable the download button
+        downloadButton.style.display = "block";
+        downloadButton.addEventListener("click", () =>
+            downloadScreenshot(screenshotData),
+        );
+    }
+
+    if (htmlData) {
+        // Enable download button
+        downloadHTMLButton.style.display = "block";
+        downloadHTMLButton.addEventListener("click", () =>
+            downloadHTML(htmlData),
+        );
+    }
+
+    if (isEditingMode) {
+        processActionButton.classList.remove("hidden");
+        processActionButton.addEventListener("click", () =>
+            getIntentFromRecording(
+                htmlData,
+                screenshotData,
+                actionName,
+                actionDescription,
+                steps,
+            ),
+        );
+    }
 
     // Function to download the screenshot
     function downloadScreenshot(dataUrl: string) {
@@ -251,83 +481,28 @@ function showRecordedActionScreenshot() {
         link.click();
         document.body.removeChild(link);
     }
-}
 
-async function showRecordedActionsTimeline() {
-    const timelineContainer = document.getElementById(
-        "timelineContainer",
-    ) as HTMLDivElement;
-
-    // Fetch recorded actions
-    let actions = await chrome.runtime.sendMessage({
-        type: "getRecordedActions",
-    });
-    if (actions == undefined) {
-        const storedActions = localStorage.getItem("userActions");
-        if (storedActions) {
-            actions = storedActions ? JSON.parse(storedActions) : [];
+    async function getIntentFromRecording(
+        html: string,
+        screenshot: string,
+        actionName: string,
+        description: string,
+        steps: any[],
+    ) {
+        const response = await chrome.runtime.sendMessage({
+            type: "getIntentFromRecording",
+            html: [{ content: html, frameId: 0 }],
+            screenshot,
+            actionName,
+            description,
+            steps: JSON.stringify(steps),
+        });
+        if (chrome.runtime.lastError) {
+            console.error("Error fetching schema:", chrome.runtime.lastError);
+            return;
         }
+        console.log(response.data);
     }
-    timelineContainer.innerHTML = "";
-
-    if (actions !== undefined && actions.length > 0) {
-        actions.forEach((action: any, index: number) => {
-            renderTimeline(action, index);
-        });
-    } else {
-        timelineContainer.innerHTML = "<p>No recorded actions.</p>";
-    }
-}
-
-function renderTimeline(action: any, index: number) {
-    const actionName = action.name;
-
-    const timelineContainer = document.getElementById("timelineContainer")!;
-
-    const timelineHeader = document.createElement("div");
-    timelineHeader.classList.add("accordion-item");
-
-    timelineHeader.innerHTML = `
-                    <h2 class="accordion-header" id="userActionheading${index}">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                            data-bs-target="#collapseAction${index}" aria-expanded="false" aria-controls="collapseAction${index}">
-                            ${actionName}
-                        </button>
-                    </h2>
-                    <div id="collapseAction${index}" class="accordion-collapse collapse" aria-labelledby="userActionheading${index}" data-bs-parent="#timelineContainer">
-                        <div class="accordion-body">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <p><i> Action description </i></h6>
-                                    <h6 class="card-title">Steps</h6>
-                                    <div id="content">
-                                        <ul class="timeline">
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-    const stepsContainer = timelineHeader.querySelector("ul.timeline")!;
-    if (action.steps != undefined && action.steps.length > 0) {
-        action.steps.forEach((step: any, index: number) => {
-            const card = document.createElement("li");
-            card.classList.add("event");
-            card.dataset.date = new Date(step.timestamp).toLocaleString();
-
-            card.innerHTML = `        
-            <h3>${index + 1}. ${step.type}</h3>
-            <p>Details.</p>
-            <pre class="card-text"><code class="language-json">${JSON.stringify(step, null, 2)}</code></pre>
-        `;
-
-            stepsContainer.appendChild(card);
-        });
-    }
-
-    timelineContainer.appendChild(timelineHeader);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -339,7 +514,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .addEventListener("click", saveUserAction);
 
     document
-        .getElementById("refreshSchema")!
+        .getElementById("refreshDetectedActions")!
         .addEventListener("click", requestSchemaUpdate);
 
     document

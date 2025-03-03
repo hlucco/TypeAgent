@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Hi, everyone. Welcome to Behind the Tech. I’m your host, Kevin Scott, Chief Technology Officer for Microsoft.  \n \nIn this podcast, we’re going to get behind the tech. We’ll talk with some of the people who have made our modern tech world possible and understand what motivated them to create what they did. So, join me to maybe learn a little bit about the history of computing and get a few behind-the-scenes insights into what’s happening today. Stick around.  \n \n[MUSIC] \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

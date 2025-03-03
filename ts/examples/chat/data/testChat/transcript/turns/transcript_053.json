@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " And quite possibly, we would then, you know, if you ventured personally onto Google, you’d just see this field of links that made really zero sense at all, and possibly just literally had no recognizable language in it, because they were coded in a way to act as flytraps for the electronic search engines that everyone was then using to filter all the – I mean, you’d get this peculiar arms race, really, between the searchers and the searched. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}

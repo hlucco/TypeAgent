@@ -1,0 +1,15 @@
+[
+    {
+        "id": 1,
+        "speaker" : "henry",
+        "content": "Hello, I'm Henry.",
+        "episode_id": 1,
+        "section_id": 1,
+        "section_title": "Introduction",
+        "embedding" : {
+            "values": [0.0],
+            "dimension": 1
+        },
+        "speaker_role" : "host"
+    }
+]

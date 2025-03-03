@@ -11,8 +11,8 @@ import {
     SemanticRefIndex,
     Term,
     TextRange,
-} from "./dataFormat.js";
-import { compareTextRange, isInTextRange } from "./query.js";
+} from "./interfaces.js";
+import { compareTextRange, isInTextRange } from "./common.js";
 
 export interface Match<T = any> {
     value: T;
@@ -118,13 +118,19 @@ export class MatchAccumulator<T = any> {
         }
     }
 
-    public addIntersect(other: MatchAccumulator) {
-        for (const otherMatch of other.getMatches()) {
-            const existingMatch = this.getMatch(otherMatch.value);
-            if (existingMatch) {
-                this.combineMatches(existingMatch, otherMatch);
+    public intersect(
+        other: MatchAccumulator,
+        intersection?: MatchAccumulator,
+    ): MatchAccumulator {
+        intersection ??= new MatchAccumulator();
+        for (const thisMatch of this.getMatches()) {
+            const otherMatch = other.getMatch(thisMatch.value);
+            if (otherMatch) {
+                this.combineMatches(thisMatch, otherMatch);
+                intersection.setMatch(thisMatch);
             }
         }
+        return intersection;
     }
 
     private combineMatches(match: Match, other: Match) {
@@ -322,6 +328,14 @@ export class SemanticRefAccumulator extends MatchAccumulator<SemanticRefIndex> {
         return accumulator;
     }
 
+    public override intersect(
+        other: SemanticRefAccumulator,
+    ): SemanticRefAccumulator {
+        const intersection = new SemanticRefAccumulator();
+        super.intersect(other, intersection);
+        return intersection;
+    }
+
     public toScoredSemanticRefs(): ScoredSemanticRef[] {
         return this.getSortedByScore(0).map((m) => {
             return {
@@ -341,9 +355,11 @@ export class MessageAccumulator extends MatchAccumulator<IMessage> {}
 
 export class TextRangeCollection {
     // Maintains ranges sorted by message index
-    private ranges: TextRange[] = [];
+    private ranges: TextRange[];
 
-    constructor() {}
+    constructor(ranges?: TextRange[] | undefined) {
+        this.ranges = ranges ?? [];
+    }
 
     public get size() {
         return this.ranges.length;
@@ -409,19 +425,21 @@ export class TextRangesInScope {
         public textRanges: TextRangeCollection[] | undefined = undefined,
     ) {}
 
-    public get hasRanges(): boolean {
-        return this.textRanges !== undefined;
-    }
-
     public addTextRanges(ranges: TextRangeCollection): void {
         this.textRanges ??= [];
         this.textRanges.push(ranges);
     }
 
-    public isRangeInScope(range: TextRange): boolean {
+    public isRangeInScope(innerRange: TextRange): boolean {
         if (this.textRanges !== undefined) {
-            for (const outerRange of this.textRanges) {
-                if (!outerRange.isInRange(range)) {
+            /**
+                Since outerRanges come from a set of range selectors, they may overlap, or may not agree.
+                Outer ranges allowed by say a date range selector... may not be allowed by a tag selector.
+                We have a very simple impl: we don't intersect/union ranges yet.
+                Instead, we ensure that the innerRange is not rejected by any outerRanges
+             */
+            for (const outerRanges of this.textRanges) {
+                if (!outerRanges.isInRange(innerRange)) {
                     return false;
                 }
             }
@@ -526,34 +544,46 @@ export class PropertyTermSet {
 }
 
 /**
- * Return a new set that is the union of two sets
- * @param x
- * @param y
- * @returns
+ * Unions two un-sorted arrays
+ * @param xArray
+ * @param yArray
  */
-export function unionSet<T = any>(x: Set<T>, y: Set<T>): Set<T> {
-    let from: Set<T>;
-    let to: Set<T>;
-    if (x.size > y.size) {
-        from = y;
-        to = x;
-    } else {
-        from = x;
-        to = y;
-    }
-    const union = new Set(to);
-    if (from.size > 0) {
-        for (const value of from.values()) {
-            union.add(value);
+export function unionArrays<T = any>(
+    x: T[] | undefined,
+    y: T[] | undefined,
+): T[] | undefined {
+    if (x) {
+        if (y) {
+            return [...union(x.values(), y.values())];
         }
+        return x;
     }
-    return union;
+    return y;
 }
 
-export function unionInPlace<T = any>(set: Set<T>, other: Set<T>): void {
-    if (other.size > 0) {
-        for (const value of other.values()) {
-            set.add(value);
-        }
+/**
+ * Unions two un-sorted iterators/arrays using a set
+ * @param xArray
+ * @param yArray
+ */
+function* union<T>(
+    xArray: Iterator<T> | Array<T>,
+    yArray: Iterator<T> | Array<T>,
+): IterableIterator<T> {
+    const x: Iterator<T> = Array.isArray(xArray) ? xArray.values() : xArray;
+    const y: Iterator<T> = Array.isArray(yArray) ? yArray.values() : yArray;
+    let unionSet = new Set<T>();
+    let xVal = x.next();
+    while (!xVal.done) {
+        unionSet.add(xVal.value);
+        xVal = x.next();
+    }
+    let yVal = y.next();
+    while (!yVal.done) {
+        unionSet.add(yVal.value);
+        yVal = y.next();
+    }
+    for (const value of unionSet.values()) {
+        yield value;
     }
 }

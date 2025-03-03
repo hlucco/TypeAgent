@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah, Adrian is, like, I think officially my favorite science fiction author right now. He’s got a new series, a new trilogy out called The Final Architecture. The third book in that, the Lords of Uncreation, I’ve had on preorder for months now. Like, I just, it’s one of those things where it will show up in May, and I will disappear for 12 hours to read it in one sitting. (Laughter.) \n \nAnd, like, he’s an impressive writer, not just in the sense that he writes such fantastically interesting science fiction, but man, he cranks them out. Like, these are, like, big, you know, 700, 800, 900-page books and, like, we thankfully get, you know, about one a year from him. I don’t even know how he does it. \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

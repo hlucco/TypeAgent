@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Yeah, and I – so, moving on to Children of Time, I thought one of the fascinating things that you did, and this was one of the things that Ezra Klein, in his podcast interview with you, went into, is you have this species of crows that are, at least emulate a human-seeming intelligence in pairs. But the crows themselves refuse the notion that they’re sentient. And so, you know, there’s this human interpretation that the human characters in the book want to project onto them that they reject.  \n \nAnd I thought that was a really interesting thing, because, you know, it’s a little bit what’s, I think, happening right now with some of these generative AI systems, like ChatGPT, that it can seem very much like a person, but it very much isn’t. Like, it’s a – you know, the mechanism of it is very simple. Like, it’s just a very complicated machine for predicting what the next thing in a sequence of tokens is going to be.  \n \nAnd so, I wonder if you’ve… I mean, you’ve probably been asked this a lot. But, you know, what do you think about the parallels between the Corvids and the… you know, these generative AI systems? \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

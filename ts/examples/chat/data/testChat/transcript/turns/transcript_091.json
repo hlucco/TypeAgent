@@ -1,0 +1,9 @@
+{
+  "speaker": "KEVIN SCOTT",
+  "speech": {
+    "value": " Arthur C. Clarke wrote this book in ‘68, ‘69, called Profiles of the Future where he was basically saying, you know, just sort of what a miserable job. Like, the more specific you are in your predictions about the future, the more likely you are to be wrong. But there are certainly themes and trends that you can spot, as a science fiction writer, as a futurist, that you can sort of make reliable extrapolations around, and then you can tell stories inside of those extrapolations that are interesting.  \n \nAnd AI has just been one of those things that we have, again, been imagining since antiquity and has played a very large part in the storytelling that we’ve done in science fiction for decades now, like everything from Commander Data in Star Trek to, you know, Terminator in the Terminator movies, you know, to, like, the thing that Adrian and I chatted about in the conversation, like, this, you know, like, really pretty big spread in science fiction from things like the Butlerian Jihad in Dune, which is a war that they had in that science fictional environment to get rid of the AIs –  \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["ADRIAN TCHAIKOVSKY", "CHRISTINA WARREN"]
+}

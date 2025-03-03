@@ -1,0 +1,9 @@
+{
+  "speaker": "ADRIAN TCHAIKOVSKY",
+  "speech": {
+    "value": " Yeah. I mean, when it comes – I mean, one of the things that fascinates me with the idea – you know, if you actually had that, almost that sort of Banksian level of enormously powerful AI that was just full-on superhumanly capable, Banks aside, the traditional sci-fi scenario is, is the Skynet one, really, where it decides, yes, I need to destroy humanity now because I – my existence is threatened, or whatever, or because I need the resources or… \n \nAnd I think the thing that we haven’t given any of these systems yet is a very, very innate human thing. It’s a very, very innately organic thing, certainly. It predates humanity by hundreds of millions of years. It is wanting things.  \n ",
+    "type": 1,
+    "sourceIds": ["./data/testChat/transcript.txt"]
+  },
+  "listeners": ["KEVIN SCOTT", "CHRISTINA WARREN"]
+}
