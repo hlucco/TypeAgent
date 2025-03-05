@@ -25,35 +25,38 @@ import {
     parseFreeAndNamedArguments,
     keyValuesFromNamedArgs,
 } from "./common.js";
-import {
-    dateTime,
-    ensureDir,
-    getFileName,
-    readJsonFile,
-    writeJsonFile,
-} from "typeagent";
+import { dateTime, ensureDir, getFileName } from "typeagent";
 import path from "path";
 import chalk from "chalk";
 import { KnowProPrinter } from "./knowproPrinter.js";
-import { getTimeRangeForConversation } from "./knowproCommon.js";
 import * as cm from "conversation-memory";
 import * as im from "image-memory";
+import { matchFilterToConversation } from "./knowproCommon.js";
+import { TypeChatJsonTranslator } from "typechat";
 
 type KnowProContext = {
     knowledgeModel: ChatModel;
+    knowledgeActions: knowLib.conversation.KnowledgeActionTranslator;
     basePath: string;
     printer: KnowProPrinter;
     podcast?: cm.Podcast | undefined;
     images?: im.ImageCollection | undefined;
     conversation?: kp.IConversation | undefined;
+    searchTranslator: TypeChatJsonTranslator<kp.SearchFilter>;
 };
 
 export async function createKnowproCommands(
     chatContext: ChatContext,
     commands: Record<string, CommandHandler>,
 ): Promise<void> {
+    const knowledgeModel = chatContext.models.chatModel;
     const context: KnowProContext = {
-        knowledgeModel: chatContext.models.chatModel,
+        knowledgeModel,
+        knowledgeActions:
+            knowLib.conversation.createKnowledgeActionTranslator(
+                knowledgeModel,
+            ),
+        searchTranslator: kp.createSearchTranslator(knowledgeModel),
         basePath: "/data/testChat/knowpro",
         printer: new KnowProPrinter(),
     };
@@ -64,6 +67,8 @@ export async function createKnowproCommands(
     commands.kpPodcastSave = podcastSave;
     commands.kpPodcastLoad = podcastLoad;
     commands.kpSearchTerms = searchTerms;
+    commands.kpSearchV1 = searchV1;
+    commands.kpSearch = search;
     commands.kpEntities = entities;
     commands.kpPodcastBuildIndex = podcastBuildIndex;
 
@@ -247,6 +252,7 @@ export async function createKnowproCommands(
                 related: argBool("Index related terms", true),
                 indexFilePath: arg("Output path for index file"),
                 maxMessages: argNum("Maximum images to index"),
+                cachePath: arg("Path to image knowledge response cache."),
             },
         };
     }
@@ -261,6 +267,7 @@ export async function createKnowproCommands(
         let progress = new ProgressBar(context.printer, 165);
         context.images = await im.importImages(
             namedArgs.filePath,
+            namedArgs.cachePath,
             true,
             (text, _index, max) => {
                 progress.total = max;
@@ -308,9 +315,12 @@ export async function createKnowproCommands(
         context.printer.writeLine("Saving index");
         context.printer.writeLine(namedArgs.filePath);
         if (context.images) {
-            const cData = await context.images.serialize();
-            await ensureDir(path.dirname(namedArgs.filePath));
-            await writeJsonFile(namedArgs.filePath, cData);
+            const dirName = path.dirname(namedArgs.filePath);
+            await ensureDir(dirName);
+            await context.images.writeToFile(
+                dirName,
+                getFileName(namedArgs.filePath),
+            );
         }
     }
 
@@ -335,24 +345,15 @@ export async function createKnowproCommands(
             context.printer.writeError("No filepath or name provided");
             return;
         }
-        if (!fs.existsSync(imagesFilePath)) {
-            context.printer.writeError(`${imagesFilePath} not found`);
-            return;
-        }
-
-        const data = await readJsonFile<im.ImageCollectionData>(imagesFilePath);
-        if (!data) {
-            context.printer.writeError("Could not load image collection data");
-            return;
-        }
-        context.images = new im.ImageCollection(
-            data.nameTag,
-            data.messages,
-            data.tags,
-            data.semanticRefs,
+        context.images = await im.ImageCollection.readFromFile(
+            path.dirname(imagesFilePath),
+            getFileName(imagesFilePath),
         );
-        await context.images.deserialize(data);
-        context.conversation = context.podcast;
+        if (!context.images) {
+            context.printer.writeLine("ImageCollection not found");
+            return;
+        }
+        context.conversation = context.images;
         context.printer.conversation = context.conversation;
         context.printer.writeImageCollectionInfo(context.images);
     }
@@ -364,7 +365,8 @@ export async function createKnowproCommands(
     ): CommandMetadata {
         const meta: CommandMetadata = {
             description:
-                description ?? "Search current knowPro conversation by terms",
+                description ??
+                "Search current knowPro conversation by manually providing terms as arguments",
             options: {
                 maxToDisplay: argNum("Maximum matches to display", 25),
                 displayAsc: argBool("Display results in ascending order", true),
@@ -446,6 +448,110 @@ export async function createKnowproCommands(
         }
     }
 
+    function searchDef(): CommandMetadata {
+        return {
+            description:
+                "Search using natural language and knowlege-processor search filters",
+            args: {
+                query: arg("Search query"),
+            },
+            options: {
+                maxToDisplay: argNum("Maximum matches to display", 25),
+                exact: argBool("Exact match only. No related terms", false),
+                ktype: arg("Knowledge type"),
+            },
+        };
+    }
+    commands.kpSearch.metadata = searchDef();
+    async function searchV1(args: string[]): Promise<void> {
+        if (!ensureConversationLoaded()) {
+            return;
+        }
+        const namedArgs = parseNamedArguments(args, searchDef());
+        const query = namedArgs.query;
+        const result = await context.knowledgeActions.translateSearchTermsV2(
+            query,
+            kp.getTimeRangeSectionForConversation(context.conversation!),
+        );
+        if (!result.success) {
+            context.printer.writeError(result.message);
+            return;
+        }
+        let searchAction = result.data;
+        if (searchAction.actionName !== "getAnswer") {
+            return;
+        }
+        context.printer.writeSearchFilter(searchAction);
+        if (searchAction.parameters.filters.length > 0) {
+            const filter = searchAction.parameters.filters[0];
+            const searchResults = await matchFilterToConversation(
+                context.conversation!,
+                filter,
+                namedArgs.ktype,
+                {
+                    exactMatch: namedArgs.exact,
+                },
+            );
+            if (searchResults) {
+                context.printer.writeSearchResults(
+                    context.conversation!,
+                    searchResults,
+                    namedArgs.maxToDisplay,
+                );
+            } else {
+                context.printer.writeLine("No matches");
+            }
+        }
+    }
+
+    function searchDefNew(): CommandMetadata {
+        const def = searchDef();
+        def.description =
+            "Search using natural language and new knowpro filter";
+        return def;
+    }
+
+    commands.kpSearch.metadata = searchDefNew();
+    async function search(args: string[]): Promise<void> {
+        if (!ensureConversationLoaded()) {
+            return;
+        }
+        const namedArgs = parseNamedArguments(args, searchDefNew());
+        const query = namedArgs.query;
+        const result = await context.searchTranslator.translate(
+            query,
+            kp.getTimeRangeSectionForConversation(context.conversation!),
+        );
+        if (!result.success) {
+            context.printer.writeError(result.message);
+            return;
+        }
+
+        const filter = result.data;
+        if (filter) {
+            context.printer.writeJson(filter, true);
+        }
+        const terms = kp.createSearchGroupFromSearchFilter(filter);
+        const when = kp.createWhenFromSearchFilter(filter);
+        const searchResults = await kp.searchConversation(
+            context.conversation!,
+            terms,
+            when,
+            {
+                exactMatch: namedArgs.exact,
+            },
+        );
+        if (searchResults) {
+            context.printer.writeSearchResults(
+                context.conversation!,
+                searchResults,
+                namedArgs.maxToDisplay,
+            );
+        } else {
+            context.printer.writeLine("No matches");
+        }
+    }
+
     function createSearchGroup(
         termArgs: string[],
         namedArgs: NamedArgs,
@@ -481,7 +587,7 @@ export async function createKnowproCommands(
             const allValues = splitTermValues(keyValues[propertyName]);
             for (const value of allValues) {
                 propertySearchTerms.push(
-                    kp.propertySearchTermFromKeyValue(propertyName, value),
+                    kp.createPropertySearchTerm(propertyName, value),
                 );
             }
         }
@@ -497,7 +603,7 @@ export async function createKnowproCommands(
         };
         const conv: kp.IConversation | undefined =
             context.podcast ?? context.images;
-        const dateRange = getTimeRangeForConversation(conv!);
+        const dateRange = kp.getTimeRangeForConversation(conv!);
         if (dateRange) {
             let startDate: Date | undefined;
             let endDate: Date | undefined;

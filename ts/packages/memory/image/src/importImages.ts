@@ -3,21 +3,21 @@
 
 import {
     IConversation,
-    IConversationData,
     IKnowledgeSource,
     IMessage,
     SemanticRef,
     ConversationIndex,
     IndexingResults,
     createKnowledgeModel,
-    ITermsToRelatedTermsIndexData,
-    IConversationThreadData,
     ConversationSettings,
     createConversationSettings,
     addMetadataToIndex,
     buildSecondaryIndexes,
     ConversationSecondaryIndexes,
     IndexingEventHandlers,
+    IConversationDataWithIndexes,
+    writeConversationDataToFile,
+    readConversationDataFromFile,
 } from "knowpro";
 import { conversation as kpLib, image } from "knowledge-processor";
 import fs from "node:fs";
@@ -27,14 +27,8 @@ import { ChatModel } from "aiclient";
 import { AddressOutput } from "@azure-rest/maps-search";
 import { isDirectoryPath } from "typeagent";
 
-export interface ImageCollectionData extends IConversationData<Image> {
-    relatedTermsIndexData?: ITermsToRelatedTermsIndexData | undefined;
-    threadData?: IConversationThreadData;
-}
-
-export interface ImageCollectionData extends IConversationData<Image> {
-    relatedTermsIndexData?: ITermsToRelatedTermsIndexData | undefined;
-}
+export interface ImageCollectionData
+    extends IConversationDataWithIndexes<Image> {}
 
 export class Image implements IMessage<ImageMeta> {
     public timestamp: string | undefined;
@@ -356,8 +350,8 @@ export class ImageCollection implements IConversation<ImageMeta> {
     public semanticRefIndex: ConversationIndex;
     public secondaryIndexes: ConversationSecondaryIndexes;
     constructor(
-        public nameTag: string,
-        public messages: Image[],
+        public nameTag: string = "",
+        public messages: Image[] = [],
         public tags: string[] = [],
         public semanticRefs: SemanticRef[] = [],
     ) {
@@ -376,7 +370,7 @@ export class ImageCollection implements IConversation<ImageMeta> {
                 this.semanticRefIndex,
                 (type, knowledge) => {
                     if (type === "entity") {
-                        return isDuplicateEntity(
+                        return !isDuplicateEntity(
                             knowledge as kpLib.ConcreteEntity,
                             this.semanticRefs,
                         );
@@ -397,7 +391,7 @@ export class ImageCollection implements IConversation<ImageMeta> {
         }
 
         this.addMetadataToIndex();
-        await buildSecondaryIndexes(this, true);
+        await buildSecondaryIndexes(this, true, eventHandler);
 
         let indexingResult: IndexingResults = {
             chunksIndexedUpto: { messageIndex: this.messages.length - 1 },
@@ -406,7 +400,7 @@ export class ImageCollection implements IConversation<ImageMeta> {
     }
 
     public async serialize(): Promise<ImageCollectionData> {
-        return {
+        const conversationData: ImageCollectionData = {
             nameTag: this.nameTag,
             messages: this.messages,
             tags: this.tags,
@@ -415,9 +409,14 @@ export class ImageCollection implements IConversation<ImageMeta> {
             relatedTermsIndexData:
                 this.secondaryIndexes.termToRelatedTermsIndex.serialize(),
         };
+        return conversationData;
     }
 
     public async deserialize(data: ImageCollectionData): Promise<void> {
+        this.nameTag = data.nameTag;
+        this.messages = data.messages;
+        this.semanticRefs = data.semanticRefs;
+        this.tags = data.tags;
         if (data.semanticIndexData) {
             this.semanticRefIndex = new ConversationIndex(
                 data.semanticIndexData,
@@ -430,6 +429,31 @@ export class ImageCollection implements IConversation<ImageMeta> {
         }
         await buildSecondaryIndexes(this, false);
     }
+
+    public async writeToFile(
+        dirPath: string,
+        baseFileName: string,
+    ): Promise<void> {
+        const data = await this.serialize();
+        await writeConversationDataToFile(data, dirPath, baseFileName);
+    }
+
+    public static async readFromFile(
+        dirPath: string,
+        baseFileName: string,
+    ): Promise<ImageCollection | undefined> {
+        const imageCollection = new ImageCollection();
+        const data = await readConversationDataFromFile(
+            dirPath,
+            baseFileName,
+            imageCollection.settings.relatedTermIndexSettings
+                .embeddingIndexSettings?.embeddingSize,
+        );
+        if (data) {
+            imageCollection.deserialize(data);
+        }
+        return imageCollection;
+    }
 }
 
 /**
@@ -441,6 +465,7 @@ export class ImageCollection implements IConversation<ImageMeta> {
  */
 export async function importImages(
     imagePath: string,
+    cachePath: string | undefined,
     recursive: boolean = true,
     callback?: (text: string, count: number, max: number) => void,
 ): Promise<ImageCollection> {
@@ -452,14 +477,28 @@ export async function importImages(
         );
     }
 
+    if (cachePath !== undefined) {
+        if (!fs.existsSync(cachePath)) {
+            fs.mkdirSync(cachePath);
+        }
+    } else {
+        cachePath = path.dirname(imagePath);
+    }
+
     // create a model used to extract data from the images
     const chatModel = createKnowledgeModel();
 
     let images: Image[] = [];
     if (isDir) {
-        images = await indexImages(imagePath, recursive, chatModel, callback);
+        images = await indexImages(
+            imagePath,
+            cachePath,
+            recursive,
+            chatModel,
+            callback,
+        );
     } else {
-        const img = await indexImage(imagePath, chatModel);
+        const img = await indexImage(imagePath, cachePath, chatModel);
         if (img !== undefined) {
             images.push(img);
         }
@@ -472,12 +511,14 @@ export async function importImages(
  * Imports images from the supplied folder.
  *
  * @param sourcePath - The folder to import.
+ * @param cachePath - The folder to cache the knowledge responses in
  * @param recursive - A flag indicating whether or not subfolders are imported.
  * @param chatModel - The model used to extract data from the image.
  * @returns - The imported images from the supplied folder.
  */
 async function indexImages(
     sourcePath: string,
+    cachePath: string,
     recursive: boolean,
     chatModel: ChatModel,
     callback?: (text: string, count: number, max: number) => void,
@@ -492,7 +533,7 @@ async function indexImages(
     for (let i = 0; i < fileNames.length; i++) {
         const fullFilePath: string = path.join(sourcePath, fileNames[i]);
         //console.log(`${fullFilePath} [${i+1} of ${fileNames.length}] (estimated time remaining: ${clock.elapsedSeconds / (i + 1) * (fileNames.length - i)})`);
-        const img = await indexImage(fullFilePath, chatModel);
+        const img = await indexImage(fullFilePath, cachePath, chatModel);
 
         if (callback) {
             callback(fileNames[i], i, fileNames.length);
@@ -510,23 +551,26 @@ async function indexImages(
  * Imports the supplied image file (if it's an image)
  *
  * @param fileName - The file to import
+ * @param cachePath - The folder to cache the knowledge response in.
  * @param chatModel - The model used to extract data from the image.
  * @returns - The imported image.
  */
 async function indexImage(
     fileName: string,
+    cachePath: string,
     chatModel: ChatModel,
 ): Promise<Image | undefined> {
     if (!fs.existsSync(fileName)) {
         console.log(`Could not find part of the file path '${fileName}'`);
         return;
     } else if (!isImageFileType(path.extname(fileName))) {
-        console.log(`Skipping '${fileName}', not a known image file.`);
+        //console.log(`Skipping '${fileName}', not a known image file.`);
         return;
     }
 
     const img: image.Image | undefined = await image.loadImageWithKnowledge(
         fileName,
+        cachePath,
         chatModel,
     );
 

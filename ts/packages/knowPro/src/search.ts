@@ -17,6 +17,7 @@ import * as q from "./query.js";
 import { IQueryOpExpr } from "./query.js";
 import { resolveRelatedTerms } from "./relatedTermsIndex.js";
 import { conversation as kpLib } from "knowledge-processor";
+import { PromptSection } from "typechat";
 
 export type SearchTerm = {
     /**
@@ -69,13 +70,37 @@ export type PropertySearchTerm = {
     propertyValue: SearchTerm;
 };
 
-function createSearchTerm(text: string, score?: number): SearchTerm {
+export function createSearchTerm(text: string, score?: number): SearchTerm {
     return {
         term: {
             text,
             weight: score,
         },
     };
+}
+
+export function createPropertySearchTerm(
+    key: string,
+    value: string,
+): PropertySearchTerm {
+    let propertyName: KnowledgePropertyName | SearchTerm;
+    let propertyValue: SearchTerm;
+    switch (key) {
+        default:
+            propertyName = createSearchTerm(key);
+            break;
+        case "name":
+        case "type":
+        case "verb":
+        case "subject":
+        case "object":
+        case "indirectObject":
+        case "tag":
+            propertyName = key;
+            break;
+    }
+    propertyValue = createSearchTerm(value);
+    return { propertyName, propertyValue };
 }
 
 export type WhenFilter = {
@@ -412,30 +437,6 @@ class SearchQueryBuilder {
     }
 }
 
-export function propertySearchTermFromKeyValue(
-    key: string,
-    value: string,
-): PropertySearchTerm {
-    let propertyName: KnowledgePropertyName | SearchTerm;
-    let propertyValue: SearchTerm;
-    switch (key) {
-        default:
-            propertyName = createSearchTerm(key);
-            break;
-        case "name":
-        case "type":
-        case "verb":
-        case "subject":
-        case "object":
-        case "indirectObject":
-        case "tag":
-            propertyName = key;
-            break;
-    }
-    propertyValue = createSearchTerm(value);
-    return { propertyName, propertyValue };
-}
-
 function isPropertyTerm(
     term: SearchTerm | PropertySearchTerm,
 ): term is PropertySearchTerm {
@@ -465,4 +466,34 @@ function isActionPropertyTerm(term: PropertySearchTerm): boolean {
     }
 
     return false;
+}
+
+export function getTimeRangeForConversation(
+    conversation: IConversation,
+): DateRange | undefined {
+    const messages = conversation.messages;
+    const start = messages[0].timestamp;
+    const end = messages[messages.length - 1].timestamp;
+    if (start !== undefined) {
+        return {
+            start: new Date(start),
+            end: end ? new Date(end) : undefined,
+        };
+    }
+    return undefined;
+}
+
+export function getTimeRangeSectionForConversation(
+    conversation: IConversation,
+): PromptSection[] {
+    const timeRange = getTimeRangeForConversation(conversation);
+    if (timeRange) {
+        return [
+            {
+                role: "system",
+                content: `ONLY IF user request explicitly asks for time ranges, THEN use the CONVERSATION TIME RANGE: "${timeRange.start} to ${timeRange.end}"`,
+            },
+        ];
+    }
+    return [];
 }

@@ -1334,6 +1334,9 @@ importers:
       common-utils:
         specifier: workspace:*
         version: link:../../commonUtils
+      dotenv:
+        specifier: ^16.3.1
+        version: 16.3.1
       typeagent:
         specifier: workspace:*
         version: link:../../typeagent
@@ -2383,6 +2386,9 @@ importers:
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
+      rimraf:
+        specifier: ^5.0.5
+        version: 5.0.5
       typescript:
         specifier: ^5.4.2
         version: 5.4.3
@@ -2429,6 +2435,9 @@ importers:
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
+      rimraf:
+        specifier: ^5.0.5
+        version: 5.0.5
       typescript:
         specifier: ^5.4.2
         version: 5.4.3
