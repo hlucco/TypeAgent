@@ -1,23 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { SemanticRefAccumulator } from "./collections.js";
+import { MessageAccumulator, SemanticRefAccumulator } from "./collections.js";
+import { DateTimeRange } from "./dateTimeSchema.js";
 import {
     DateRange,
     IConversation,
     KnowledgeType,
     ScoredKnowledge,
-    ScoredSemanticRef,
+    ScoredSemanticRefOrdinal,
     SemanticRef,
     Term,
     IConversationSecondaryIndexes,
+    ScoredMessageOrdinal,
 } from "./interfaces.js";
 import { mergedEntities, mergeTopics } from "./knowledge.js";
+import { isMessageTextEmbeddingIndex } from "./messageIndex.js";
 import * as q from "./query.js";
 import { IQueryOpExpr } from "./query.js";
 import { resolveRelatedTerms } from "./relatedTermsIndex.js";
 import { conversation as kpLib } from "knowledge-processor";
-import { PromptSection } from "typechat";
 
 export type SearchTerm = {
     /**
@@ -109,35 +111,142 @@ export type WhenFilter = {
     threadDescription?: string | undefined;
 };
 
+export function createWhenFilterForDateTimeRange(
+    dateTimeRange?: DateTimeRange | undefined,
+): WhenFilter {
+    const when: WhenFilter = {};
+    if (dateTimeRange) {
+        when.dateRange = dateRangeFromDateTimeRange(dateTimeRange);
+    }
+    return when;
+}
+
+export function dateRangeFromDateTimeRange(
+    dateTimeRange: DateTimeRange,
+): DateRange {
+    return {
+        start: kpLib.toStartDate(dateTimeRange.startDate),
+        end: kpLib.toStopDate(dateTimeRange.stopDate),
+    };
+}
+
 export type SearchOptions = {
-    maxMatches?: number | undefined;
+    maxKnowledgeMatches?: number | undefined;
     exactMatch?: boolean | undefined;
     usePropertyIndex?: boolean | undefined;
     useTimestampIndex?: boolean | undefined;
+    maxMessageMatches?: number | undefined;
+    maxMessageCharsInBudget?: number | undefined;
 };
 
-export type SearchResult = {
+export type SemanticRefSearchResult = {
     termMatches: Set<string>;
-    semanticRefMatches: ScoredSemanticRef[];
+    semanticRefMatches: ScoredSemanticRefOrdinal[];
+};
+
+export type ConversationSearchResult = {
+    messageMatches: ScoredMessageOrdinal[];
+    knowledgeMatches: Map<KnowledgeType, SemanticRefSearchResult>;
 };
 
 /**
- * Searches conversation for terms
+ * Search a conversation for messages and knowledge that match the supplied search terms
+ * @param conversation Conversation to search
+ * @param searchTermGroup a group of search terms to match
+ * @param filter conditional filter to scope what messages and knowledge are matched
+ * @param options search options
+ * @returns
  */
 export async function searchConversation(
     conversation: IConversation,
     searchTermGroup: SearchTermGroup,
     filter?: WhenFilter,
     options?: SearchOptions,
-): Promise<Map<KnowledgeType, SearchResult> | undefined> {
+    rawSearchQuery?: string,
+): Promise<ConversationSearchResult | undefined> {
+    const knowledgeMatches = await searchConversationKnowledge(
+        conversation,
+        searchTermGroup,
+        filter,
+        options,
+    );
+    if (!knowledgeMatches) {
+        return undefined;
+    }
+    // Future: Combine knowledge and message queries into single query tree
+    const queryBuilder = new QueryCompiler(
+        conversation,
+        conversation.secondaryIndexes ?? {},
+    );
+    const query = await queryBuilder.compileMessageQuery(
+        knowledgeMatches,
+        options,
+        rawSearchQuery,
+    );
+    const messageMatches: ScoredMessageOrdinal[] = runQuery(
+        conversation,
+        options,
+        query,
+    );
+    return {
+        messageMatches,
+        knowledgeMatches,
+    };
+}
+
+/**
+ * Search a conversation for knowledge that matches the given search terms
+ * @param conversation Conversation to search
+ * @param searchTermGroup a group of search terms to match
+ * @param filter conditional filter to scope what messages and knowledge are matched
+ * @param options search options
+ * @returns
+ */
+export async function searchConversationKnowledge(
+    conversation: IConversation,
+    searchTermGroup: SearchTermGroup,
+    filter?: WhenFilter,
+    options?: SearchOptions,
+): Promise<Map<KnowledgeType, SemanticRefSearchResult> | undefined> {
     if (!q.isConversationSearchable(conversation)) {
         return undefined;
     }
+    const queryBuilder = new QueryCompiler(
+        conversation,
+        conversation.secondaryIndexes ?? {},
+    );
+    const query = await queryBuilder.compileKnowledgeQuery(
+        searchTermGroup,
+        filter,
+        options,
+    );
+    return runQuery(conversation, options, query);
+}
+
+export function getDistinctEntityMatches(
+    semanticRefs: SemanticRef[],
+    searchResults: ScoredSemanticRefOrdinal[],
+    topK?: number,
+): ScoredKnowledge[] {
+    return mergedEntities(semanticRefs, searchResults, topK);
+}
+
+export function getDistinctTopicMatches(
+    semanticRefs: SemanticRef[],
+    searchResults: ScoredSemanticRefOrdinal[],
+    topK?: number,
+): ScoredKnowledge[] {
+    return mergeTopics(semanticRefs, searchResults, topK);
+}
+
+function runQuery<T = any>(
+    conversation: IConversation,
+    options: SearchOptions | undefined,
+    query: IQueryOpExpr<T>,
+): T {
     const secondaryIndexes: IConversationSecondaryIndexes =
         conversation.secondaryIndexes ?? {};
-    const queryBuilder = new SearchQueryBuilder(conversation, secondaryIndexes);
-    const query = await queryBuilder.compile(searchTermGroup, filter, options);
-    const queryResults = query.eval(
+    return query.eval(
         new q.QueryEvalContext(
             conversation,
             options?.usePropertyIndex
@@ -148,26 +257,9 @@ export async function searchConversation(
                 : undefined,
         ),
     );
-    return queryResults;
 }
 
-export function getDistinctEntityMatches(
-    semanticRefs: SemanticRef[],
-    searchResults: ScoredSemanticRef[],
-    topK?: number,
-): ScoredKnowledge[] {
-    return mergedEntities(semanticRefs, searchResults, topK);
-}
-
-export function getDistinctTopicMatches(
-    semanticRefs: SemanticRef[],
-    searchResults: ScoredSemanticRef[],
-    topK?: number,
-): ScoredKnowledge[] {
-    return mergeTopics(semanticRefs, searchResults, topK);
-}
-
-class SearchQueryBuilder {
+class QueryCompiler {
     // All SearchTerms used which compiling the 'select' portion of the query
     private allSearchTerms: SearchTerm[] = [];
     // All search terms used while compiling predicates in the query
@@ -182,7 +274,7 @@ class SearchQueryBuilder {
         public relatedIsExactThreshold: number = 0.95,
     ) {}
 
-    public async compile(
+    public async compileKnowledgeQuery(
         terms: SearchTermGroup,
         filter?: WhenFilter,
         options?: SearchOptions,
@@ -200,16 +292,42 @@ class SearchQueryBuilder {
         return new q.GroupSearchResultsExpr(query);
     }
 
-    public async compileQuery(
+    public async compileMessageQuery(
+        knowledge:
+            | IQueryOpExpr<Map<KnowledgeType, SemanticRefSearchResult>>
+            | Map<KnowledgeType, SemanticRefSearchResult>,
+        options?: SearchOptions,
+        rawQueryText?: string,
+    ): Promise<IQueryOpExpr> {
+        let query: IQueryOpExpr = new q.MessagesFromKnowledgeExpr(knowledge);
+        if (options) {
+            query = await this.compileMessageReRank(
+                query,
+                rawQueryText,
+                options.maxMessageMatches,
+            );
+            if (
+                options.maxMessageCharsInBudget &&
+                options.maxMessageCharsInBudget > 0
+            ) {
+                query = new q.SelectMessagesInCharBudget(
+                    query,
+                    options.maxMessageCharsInBudget,
+                );
+            }
+        }
+        query = new q.GetScoredMessages(query);
+        return query;
+    }
+
+    private async compileQuery(
         searchTermGroup: SearchTermGroup,
         filter?: WhenFilter,
         options?: SearchOptions,
     ): Promise<IQueryOpExpr<Map<KnowledgeType, SemanticRefAccumulator>>> {
         let selectExpr = this.compileSelect(
             searchTermGroup,
-            filter
-                ? await this.compileScope(searchTermGroup, filter)
-                : undefined,
+            await this.compileScope(searchTermGroup, filter),
             options,
         );
         // Constrain the select with scopes and 'where'
@@ -222,7 +340,7 @@ class SearchQueryBuilder {
         // And lastly, select 'TopN' and group knowledge by type
         return new q.SelectTopNKnowledgeGroupExpr(
             new q.GroupByKnowledgeTypeExpr(selectExpr),
-            options?.maxMatches,
+            options?.maxKnowledgeMatches,
         );
     }
 
@@ -276,11 +394,11 @@ class SearchQueryBuilder {
 
     private async compileScope(
         searchGroup: SearchTermGroup,
-        filter: WhenFilter,
+        filter?: WhenFilter,
     ): Promise<q.GetScopeExpr | undefined> {
         let scopeSelectors: q.IQueryTextRangeSelector[] | undefined;
         // First, use any provided date ranges to select scope
-        if (filter.dateRange) {
+        if (filter && filter.dateRange) {
             scopeSelectors ??= [];
             scopeSelectors.push(
                 new q.TextRangesInDateRangeSelector(filter.dateRange),
@@ -301,7 +419,7 @@ class SearchQueryBuilder {
         }
         // If a thread index is available...
         const threads = this.secondaryIndexes?.threads;
-        if (filter.threadDescription && threads) {
+        if (filter && filter.threadDescription && threads) {
             const threadsInScope = await threads.lookupThread(
                 filter.threadDescription,
             );
@@ -310,7 +428,7 @@ class SearchQueryBuilder {
                 scopeSelectors.push(
                     new q.ThreadSelector(
                         threadsInScope.map(
-                            (t) => threads.threads[t.threadIndex],
+                            (t) => threads.threads[t.threadOrdinal],
                         ),
                     ),
                 );
@@ -327,19 +445,33 @@ class SearchQueryBuilder {
         return predicates;
     }
 
-    /*
-    private compilePropertyMatchPredicates(
-        propertyTerms: PropertySearchTerm[],
-    ) {
-        return propertyTerms.map((p) => {
-            if (typeof p.propertyName !== "string") {
-                this.allPredicateSearchTerms.push(p.propertyName);
-            }
-            this.allPredicateSearchTerms.push(p.propertyValue);
-            return new q.PropertyMatchPredicate(p);
-        });
+    private async compileMessageReRank(
+        srcExpr: IQueryOpExpr<MessageAccumulator>,
+        rawQueryText?: string | undefined,
+        maxMessageMatches?: number | undefined,
+    ): Promise<IQueryOpExpr> {
+        const messageIndex = this.conversation.secondaryIndexes?.messageIndex;
+        if (
+            messageIndex &&
+            rawQueryText &&
+            maxMessageMatches &&
+            maxMessageMatches > 0 &&
+            isMessageTextEmbeddingIndex(messageIndex)
+        ) {
+            // If embeddings supported, and there are too many matches, try to re-rank using similarity matching
+            const embedding =
+                await messageIndex.generateEmbedding(rawQueryText);
+            return new q.RankMessagesBySimilarity(
+                srcExpr,
+                embedding,
+                maxMessageMatches,
+            );
+        } else if (maxMessageMatches && maxMessageMatches > 0) {
+            return new q.SelectTopNExpr(srcExpr, maxMessageMatches);
+        } else {
+            return new q.NoOpExpr(srcExpr);
+        }
     }
-    */
 
     private getActionTermsFromSearchGroup(
         searchGroup: SearchTermGroup,
@@ -360,6 +492,7 @@ class SearchQueryBuilder {
     private async resolveRelatedTerms(
         searchTerms: SearchTerm[],
         dedupe: boolean,
+        filter?: WhenFilter,
     ) {
         this.validateAndPrepareSearchTerms(searchTerms);
         if (this.secondaryIndexes?.termToRelatedTermsIndex) {
@@ -367,11 +500,31 @@ class SearchQueryBuilder {
                 this.secondaryIndexes.termToRelatedTermsIndex,
                 searchTerms,
                 dedupe,
+                //(term) => this.shouldFuzzyMatchRelatedTerms(term, filter),
             );
             // Ensure that the resolved terms are valid etc.
             this.validateAndPrepareSearchTerms(searchTerms);
         }
     }
+
+    /*
+    private shouldFuzzyMatchRelatedTerms(
+        term: SearchTerm,
+        filter?: WhenFilter,
+    ): boolean {
+        const kType = filter?.knowledgeType;
+        if (kType && kType !== "entity") {
+            return true;
+        }
+        // If the term exactly matches the name of an entity, don't do fuzzy resolution
+        // The user was explicitly referring to an entity with a particular name
+        return !isKnownProperty(
+            this.secondaryIndexes?.propertyToSemanticRefIndex,
+            PropertyNames.EntityName,
+            term.term.text,
+        );
+    }
+    */
 
     private validateAndPrepareSearchTerms(searchTerms: SearchTerm[]): void {
         for (const searchTerm of searchTerms) {
@@ -418,9 +571,9 @@ class SearchQueryBuilder {
     private boostEntities(
         searchTerm: SearchTerm,
         sr: SemanticRef,
-        scoredRef: ScoredSemanticRef,
+        scoredRef: ScoredSemanticRefOrdinal,
         boostWeight: number,
-    ): ScoredSemanticRef {
+    ): ScoredSemanticRefOrdinal {
         if (
             sr.knowledgeType === "entity" &&
             q.matchEntityNameOrType(
@@ -429,7 +582,7 @@ class SearchQueryBuilder {
             )
         ) {
             scoredRef = {
-                semanticRefIndex: scoredRef.semanticRefIndex,
+                semanticRefOrdinal: scoredRef.semanticRefOrdinal,
                 score: scoredRef.score * boostWeight,
             };
         }
@@ -466,34 +619,4 @@ function isActionPropertyTerm(term: PropertySearchTerm): boolean {
     }
 
     return false;
-}
-
-export function getTimeRangeForConversation(
-    conversation: IConversation,
-): DateRange | undefined {
-    const messages = conversation.messages;
-    const start = messages[0].timestamp;
-    const end = messages[messages.length - 1].timestamp;
-    if (start !== undefined) {
-        return {
-            start: new Date(start),
-            end: end ? new Date(end) : undefined,
-        };
-    }
-    return undefined;
-}
-
-export function getTimeRangeSectionForConversation(
-    conversation: IConversation,
-): PromptSection[] {
-    const timeRange = getTimeRangeForConversation(conversation);
-    if (timeRange) {
-        return [
-            {
-                role: "system",
-                content: `ONLY IF user request explicitly asks for time ranges, THEN use the CONVERSATION TIME RANGE: "${timeRange.start} to ${timeRange.end}"`,
-            },
-        ];
-    }
-    return [];
 }

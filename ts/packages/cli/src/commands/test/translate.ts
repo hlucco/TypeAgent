@@ -6,7 +6,7 @@ import { fromJsonActions, toFullActions, FullAction } from "agent-cache";
 import { createDispatcher } from "agent-dispatcher";
 import {
     readExplanationTestData,
-    getSchemaNamesForActionConfigProvider,
+    getAllSchemaNames,
     createActionConfigProvider,
 } from "agent-dispatcher/internal";
 import { getInstanceDir } from "agent-dispatcher/helpers/data";
@@ -83,7 +83,8 @@ function summarizeResult(result: TestResultFile) {
 
 const modelNames = await getChatModelNames();
 const defaultAppAgentProviders = getDefaultAppAgentProviders(getInstanceDir());
-const schemaNames = getSchemaNamesForActionConfigProvider(
+const defaultConstructionProvider = getDefaultConstructionProvider();
+const schemaNames = getAllSchemaNames(
     await createActionConfigProvider(defaultAppAgentProviders),
 );
 const defaultRepeat = 5;
@@ -161,6 +162,10 @@ export default class TestTranslateCommand extends Command {
             description: "Enable streaming",
             default: true, // follow DispatcherOptions default
             allowNo: true,
+        }),
+        cache: Flags.boolean({
+            description: "Enable caching",
+            default: false,
         }),
         concurrency: Flags.integer({
             char: "c",
@@ -374,9 +379,13 @@ export default class TestTranslateCommand extends Command {
                     },
                 },
                 explainer: { enabled: false },
-                cache: { enabled: false },
+                cache: { enabled: flags.cache },
                 collectCommandResult: true,
+                constructionProvider: defaultConstructionProvider,
             });
+            if (flags.cache) {
+                await dispatcher.processCommand("@const import -t");
+            }
             while (requests.length > 0) {
                 const request = requests.shift()!;
 

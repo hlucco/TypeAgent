@@ -1,19 +1,32 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { TextLocation } from "./interfaces.js";
+import { ListIndexingResult, TextLocation } from "./interfaces.js";
 import { IndexingEventHandlers } from "./interfaces.js";
 import {
-    TextEmbeddingIndex,
+    addTextBatchToEmbeddingIndex,
+    addTextToEmbeddingIndex,
+    EmbeddingIndex,
+    indexOfNearestTextInIndex,
+    indexOfNearestTextInIndexSubset,
     TextEmbeddingIndexSettings,
 } from "./fuzzyIndex.js";
+import { NormalizedEmbedding } from "typeagent";
 
 export type ScoredTextLocation = {
     score: number;
     textLocation: TextLocation;
 };
 
-export interface ITextToTextLocationIndexFuzzy {
+export interface ITextToTextLocationIndex {
+    addTextLocation(
+        text: string,
+        textLocation: TextLocation,
+    ): Promise<ListIndexingResult>;
+    addTextLocations(
+        textAndLocations: [string, TextLocation][],
+        eventHandler?: IndexingEventHandlers,
+    ): Promise<ListIndexingResult>;
     lookupText(
         text: string,
         maxMatches?: number,
@@ -29,34 +42,62 @@ export interface ITextToTextLocationIndexData {
     embeddings: Float32Array[];
 }
 
-export class TextToTextLocationIndexFuzzy
-    implements ITextToTextLocationIndexFuzzy
-{
+export class TextToTextLocationIndex implements ITextToTextLocationIndex {
     private textLocations: TextLocation[];
-    private embeddingIndex: TextEmbeddingIndex;
+    private embeddingIndex: EmbeddingIndex;
 
-    constructor(settings: TextEmbeddingIndexSettings) {
+    constructor(public settings: TextEmbeddingIndexSettings) {
         this.textLocations = [];
-        this.embeddingIndex = new TextEmbeddingIndex(settings);
+        this.embeddingIndex = new EmbeddingIndex();
+    }
+
+    public get size(): number {
+        return this.embeddingIndex.size;
+    }
+
+    public get(pos: number): TextLocation {
+        return this.textLocations[pos];
     }
 
     public async addTextLocation(
         text: string,
         textLocation: TextLocation,
-    ): Promise<void> {
-        await this.embeddingIndex.addText(text);
-        this.textLocations.push(textLocation);
+    ): Promise<ListIndexingResult> {
+        const result = await addTextToEmbeddingIndex(
+            this.embeddingIndex,
+            this.settings.embeddingModel,
+            [text],
+        );
+        if (result.numberCompleted > 0) {
+            this.textLocations.push(textLocation);
+        }
+        return result;
     }
 
-    public async addTextLocationsBatched(
+    public async addTextLocations(
         textAndLocations: [string, TextLocation][],
         eventHandler?: IndexingEventHandlers,
-    ): Promise<void> {
-        await this.embeddingIndex.addTextBatch(
-            textAndLocations.map((tl) => tl[0]),
+        batchSize?: number,
+    ): Promise<ListIndexingResult> {
+        const indexingEvents = createMessageIndexingEventHandler(
+            textAndLocations,
             eventHandler,
         );
-        this.textLocations.push(...textAndLocations.map((tl) => tl[1]));
+        const result = await addTextBatchToEmbeddingIndex(
+            this.embeddingIndex,
+            this.settings.embeddingModel,
+            textAndLocations.map((tl) => tl[0]),
+            batchSize ?? this.settings.batchSize,
+            indexingEvents,
+        );
+        if (result.numberCompleted > 0) {
+            textAndLocations =
+                result.numberCompleted === textAndLocations.length
+                    ? textAndLocations
+                    : textAndLocations.slice(0, result.numberCompleted);
+            this.textLocations.push(...textAndLocations.map((tl) => tl[1]));
+        }
+        return result;
     }
 
     public async lookupText(
@@ -64,7 +105,9 @@ export class TextToTextLocationIndexFuzzy
         maxMatches?: number,
         thresholdScore?: number,
     ): Promise<ScoredTextLocation[]> {
-        const matches = await this.embeddingIndex.getIndexesOfNearest(
+        const matches = await indexOfNearestTextInIndex(
+            this.embeddingIndex,
+            this.settings.embeddingModel,
             text,
             maxMatches,
             thresholdScore,
@@ -75,6 +118,62 @@ export class TextToTextLocationIndexFuzzy
                 score: m.score,
             };
         });
+    }
+
+    /**
+     * Find text locations nearest to the provided text.
+     * But only search over the subset of text locations in this index identified by ordinalsToSearch
+     * @param text
+     * @param ordinalsToSearch
+     * @param maxMatches
+     * @param thresholdScore
+     * @returns
+     */
+    public async lookupTextInSubset(
+        text: string,
+        ordinalsToSearch: number[],
+        maxMatches?: number,
+        thresholdScore?: number,
+    ): Promise<ScoredTextLocation[]> {
+        const matches = await indexOfNearestTextInIndexSubset(
+            this.embeddingIndex,
+            this.settings.embeddingModel,
+            text,
+            ordinalsToSearch,
+            maxMatches,
+            thresholdScore,
+        );
+        return matches.map((m) => {
+            return {
+                textLocation: this.textLocations[m.item],
+                score: m.score,
+            };
+        });
+    }
+
+    public lookupInSubsetByEmbedding(
+        textEmbedding: NormalizedEmbedding,
+        ordinalsToSearch: number[],
+        maxMatches?: number,
+        thresholdScore?: number,
+    ): ScoredTextLocation[] {
+        const matches = this.embeddingIndex.getIndexesOfNearestInSubset(
+            textEmbedding,
+            ordinalsToSearch,
+            maxMatches,
+            thresholdScore,
+        );
+        return matches.map((m) => {
+            return {
+                textLocation: this.textLocations[m.item],
+                score: m.score,
+            };
+        });
+    }
+
+    public clear(): void {
+        this.textLocations = [];
+        this.embeddingIndex.clear();
     }
 
     public serialize(): ITextToTextLocationIndexData {
@@ -93,4 +192,25 @@ export class TextToTextLocationIndexFuzzy
         this.textLocations = data.textLocations;
         this.embeddingIndex.deserialize(data.embeddings);
     }
+}
+
+function createMessageIndexingEventHandler(
+    textAndLocations: [string, TextLocation][],
+    eventHandler?: IndexingEventHandlers | undefined,
+): IndexingEventHandlers | undefined {
+    return eventHandler && eventHandler.onTextIndexed !== undefined
+        ? {
+              onEmbeddingsCreated: (texts, batch, batchStartAt) => {
+                  eventHandler.onTextIndexed!(
+                      textAndLocations,
+                      textAndLocations.slice(
+                          batchStartAt,
+                          batchStartAt + batch.length,
+                      ),
+                      batchStartAt,
+                  );
+                  return true;
+              },
+          }
+        : eventHandler;
 }

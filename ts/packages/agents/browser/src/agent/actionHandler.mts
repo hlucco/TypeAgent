@@ -37,7 +37,6 @@ import { processWebAgentMessage, WebAgentChannels } from "./webTypeAgent.mjs";
 import { isWebAgentMessage } from "../common/webAgentMessageTypes.mjs";
 import { handleSchemaDiscoveryAction } from "./discovery/actionHandler.mjs";
 import { BrowserActions } from "./actionsSchema.mjs";
-import { PaleoBioDbActions } from "./paleoBioDb/schema.mjs";
 import { CrosswordActions } from "./crossword/schema/userActions.mjs";
 import { InstacartActions } from "./instacart/schema/userActions.mjs";
 import { ShoppingActions } from "./commerce/schema/userActions.mjs";
@@ -176,7 +175,8 @@ async function updateBrowserContext(
                             break;
                         }
 
-                        case "initializePageSchema":
+                        case "detectPageActions":
+                        case "registerPageDynamicAgent":
                         case "getIntentFromRecording": {
                             const discoveryResult =
                                 await handleSchemaDiscoveryAction(
@@ -217,11 +217,10 @@ async function updateBrowserContext(
 async function executeBrowserAction(
     action:
         | TypeAgentAction<BrowserActions, "browser">
-        | TypeAgentAction<PaleoBioDbActions, "browser.paleoBioDb">
         | TypeAgentAction<CrosswordActions, "browser.crossword">
         | TypeAgentAction<ShoppingActions, "browser.commerce">
         | TypeAgentAction<InstacartActions, "browser.instacart">
-        | TypeAgentAction<SchemaDiscoveryActions, "browser.schemaFinder">,
+        | TypeAgentAction<SchemaDiscoveryActions, "browser.actionDiscovery">,
 
     context: ActionContext<BrowserActionContext>,
 ) {
@@ -232,9 +231,7 @@ async function executeBrowserAction(
             context.actionIO.setDisplay("Running remote action.");
 
             let schemaName = "browser";
-            if (action.translatorName === "browser.paleoBioDb") {
-                schemaName = "browser.paleoBioDb";
-            } else if (action.translatorName === "browser.crossword") {
+            if (action.translatorName === "browser.crossword") {
                 const crosswordResult = await handleCrosswordAction(
                     action,
                     context.sessionContext,
@@ -259,7 +256,7 @@ async function executeBrowserAction(
                 );
 
                 // return createActionResult(instacartResult);
-            } else if (action.translatorName === "browser.schemaFinder") {
+            } else if (action.translatorName === "browser.actionDiscovery") {
                 const discoveryResult = await handleSchemaDiscoveryAction(
                     action,
                     context.sessionContext,

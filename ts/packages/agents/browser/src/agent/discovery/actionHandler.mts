@@ -20,8 +20,12 @@ import { fileURLToPath } from "url";
 import { UserActionsList } from "./schema/userActionsPool.mjs";
 import { PageDescription } from "./schema/pageSummary.mjs";
 import { createTempAgentForSchema } from "./tempAgentActionHandler.mjs";
-import { SchemaDiscoveryActions } from "./schema/discoveryActions.mjs";
+import {
+    GetIntentFromRecording,
+    SchemaDiscoveryActions,
+} from "./schema/discoveryActions.mjs";
 import { UserIntent } from "./schema/recordedActions.mjs";
+import { createSchemaAuthoringAgent } from "./authoringActionHandler.mjs";
 
 export async function handleSchemaDiscoveryAction(
     action: SchemaDiscoveryActions,
@@ -39,8 +43,7 @@ export async function handleSchemaDiscoveryAction(
     const agent = await createDiscoveryPageTranslator("GPT_4_O");
 
     switch (action.actionName) {
-        case "initializePageSchema":
-        case "findUserActions":
+        case "detectPageActions":
             actionData = await handleFindUserActions(action);
             break;
         case "summarizePage":
@@ -57,6 +60,12 @@ export async function handleSchemaDiscoveryAction(
             break;
         case "getIntentFromRecording":
             actionData = await handleGetIntentFromReccording(action);
+            break;
+        case "registerPageDynamicAgent":
+            actionData = await handleRegisterSiteSchema(action);
+            break;
+        case "addUserAction":
+            actionData = await handleRegisterAuthoringAgent(action);
             break;
     }
 
@@ -101,23 +110,25 @@ export async function handleSchemaDiscoveryAction(
 
         console.timeEnd(timerName);
 
+        const selected = response.data as UserActionsList;
+        const uniqueItems = new Map(
+            selected.actions.map((action) => [action.actionName, action]),
+        );
+
         message =
             "Possible user actions: \n" +
-            JSON.stringify(response.data, null, 2);
+            JSON.stringify(Array.from(uniqueItems.values()), null, 2);
 
-        const selected = response.data as UserActionsList;
-        const actionNames = [
-            ...new Set(selected.actions.map((action) => action.actionName)),
-        ];
+        const actionNames = [...new Set(uniqueItems.keys())];
 
-        const schema = await getDynamicSchema(actionNames);
+        const { schema, typeDefinitions } = await getDynamicSchema(actionNames);
         message += `\n =========== \n Discovered actions schema: \n ${schema} `;
 
         const url = await browser.getPageUrl();
         const hostName = new URL(url!).hostname.replace(/\./g, "_");
         const agentName = `temp_${hostName}`;
 
-        if (action.parameters.registerAgent) {
+        if (action.parameters?.registerAgent) {
             const manifest: AppAgentManifest = {
                 emojiChar: "🚧",
                 description: schemaDescription,
@@ -142,7 +153,120 @@ export async function handleSchemaDiscoveryAction(
             }, 500);
         }
 
-        return response.data;
+        return {
+            schema: Array.from(uniqueItems.values()),
+            typeDefinitions: typeDefinitions,
+        };
+    }
+
+    async function handleRegisterAuthoringAgent(action: any) {
+        const packageRoot = path.join("..", "..", "..");
+        const schemaFilePath = fileURLToPath(
+            new URL(
+                path.join(
+                    packageRoot,
+                    "./src/agent/discovery/schema/authoringActions.mts",
+                ),
+                import.meta.url,
+            ),
+        );
+
+        const agentName = `actionAuthor`;
+        const schemaDescription = `A schema that enables authoring new actions for the web automation plans`;
+
+        const manifest: AppAgentManifest = {
+            emojiChar: "🧑‍🔧",
+            description: schemaDescription,
+            schema: {
+                description: schemaDescription,
+                schemaType: "PlanAuthoringActions",
+                schemaFile: schemaFilePath,
+                cached: false,
+            },
+        };
+
+        // register agent after request is processed to avoid a deadlock
+        setTimeout(async () => {
+            try {
+                await context.removeDynamicAgent(agentName);
+            } catch {}
+
+            await context.addDynamicAgent(
+                agentName,
+                manifest,
+                createSchemaAuthoringAgent(browser, agent, context),
+            );
+        }, 500);
+    }
+
+    async function handleRegisterSiteSchema(action: any) {
+        const url = await browser.getPageUrl();
+        const detectedActions = new Map(
+            Object.entries(
+                (await browser.getCurrentPageStoredProperty(
+                    url!,
+                    "detectedActionDefinitions",
+                )) ?? {},
+            ),
+        );
+        const authoredActions = new Map(
+            Object.entries(
+                (await browser.getCurrentPageStoredProperty(
+                    url!,
+                    "authoredActionDefinitions",
+                )) ?? {},
+            ),
+        );
+        const typeDefinitions: ActionSchemaTypeDefinition[] = [
+            ...detectedActions.values(),
+            ...authoredActions.values(),
+        ];
+
+        if (typeDefinitions.length === 0) {
+            console.log("No actions for this schema.");
+            return;
+        }
+
+        const union = sc.union(
+            typeDefinitions.map((definition) => sc.ref(definition)),
+        );
+        const entry = sc.type("DynamicUserPageActions", union);
+        entry.exported = true;
+        const actionSchemas = new Map<string, ActionSchemaTypeDefinition>();
+        const order = new Map<string, number>();
+        const schema = await generateActionSchema(
+            { entry, actionSchemas, order },
+            { exact: true },
+        );
+
+        const hostName = new URL(url!).hostname.replace(/\./g, "_");
+        const agentName = `temp_${hostName}`;
+        const schemaDescription = `A schema that enables interactions with the ${hostName} page`;
+
+        const manifest: AppAgentManifest = {
+            emojiChar: "🚧",
+            description: schemaDescription,
+            schema: {
+                description: schemaDescription,
+                schemaType: "DynamicUserPageActions",
+                schemaFile: { content: schema, type: "ts" },
+            },
+        };
+
+        // register agent after request is processed to avoid a deadlock
+        setTimeout(async () => {
+            try {
+                await context.removeDynamicAgent(agentName);
+            } catch {}
+
+            await context.addDynamicAgent(
+                agentName,
+                manifest,
+                createTempAgentForSchema(browser, agent, context),
+            );
+        }, 500);
+
+        return { schema: schema, typeDefinitions: typeDefinitions };
     }
 
     async function getDynamicSchema(actionNames: string[]) {
@@ -167,15 +291,17 @@ export async function handleSchemaDiscoveryAction(
             "UserPageActions",
         );
 
-        let typeDefinitions: ActionSchemaTypeDefinition[] = [];
+        let typeDefinitions = new Map<string, ActionSchemaTypeDefinition>();
         actionNames.forEach((name) => {
             if (parsed.actionSchemas.has(name)) {
-                typeDefinitions.push(parsed.actionSchemas.get(name)!);
+                typeDefinitions.set(name, parsed.actionSchemas.get(name)!);
             }
         });
 
         const union = sc.union(
-            typeDefinitions.map((definition) => sc.ref(definition)),
+            Array.from(typeDefinitions.values()).map((definition) =>
+                sc.ref(definition),
+            ),
         );
         const entry = sc.type("DynamicUserPageActions", union);
         entry.exported = true;
@@ -186,7 +312,7 @@ export async function handleSchemaDiscoveryAction(
             { exact: true },
         );
 
-        return schema;
+        return { schema, typeDefinitions: Object.fromEntries(typeDefinitions) };
     }
 
     async function handleGetPageSummary(action: any) {
@@ -281,50 +407,83 @@ export async function handleSchemaDiscoveryAction(
     ) {
         let fields: Map<string, any> = new Map<string, any>();
 
-        userIntentJson.parameters.forEach((p) => {
-            let t: ActionParamType = sc.string();
-            switch (p.type) {
+        userIntentJson.parameters.forEach((param) => {
+            let paramType: ActionParamType = sc.string();
+            switch (param.type) {
                 case "string":
-                    t = sc.string();
+                    paramType = sc.string();
                     break;
                 case "number":
-                    t = sc.number();
+                    paramType = sc.number();
                     break;
                 case "boolean":
-                    t = sc.number();
+                    paramType = sc.number();
                     break;
             }
 
-            if (p.required && !p.defaultValue) {
-                fields.set(p.shortName, sc.field(t, p.description));
+            if (param.required && !param.defaultValue) {
+                fields.set(
+                    param.shortName,
+                    sc.field(paramType, param.description),
+                );
             } else {
-                fields.set(p.shortName, sc.optional(t, p.description));
+                fields.set(
+                    param.shortName,
+                    sc.optional(paramType, param.description),
+                );
             }
         });
 
         const obj: ActionSchemaObject = sc.obj({
-            actionName: sc.string(userIntentJson.actiontName),
+            actionName: sc.string(userIntentJson.actionName),
             parameters: sc.obj(Object.fromEntries(fields)),
         } as const);
 
         const schema = sc.type(
-            userIntentJson.actiontName,
+            userIntentJson.actionName,
             obj,
             actionDescription,
             true,
         );
 
-        return await generateSchemaTypeDefinition(schema, { exact: true });
+        return {
+            actionSchema: generateSchemaTypeDefinition(schema, { exact: true }),
+            typeDefinition: schema,
+        };
     }
 
-    async function handleGetIntentFromReccording(action: any) {
+    async function handleGetIntentFromReccording(
+        action: GetIntentFromRecording,
+    ) {
+        let recordedSteps = action.parameters.recordedActionSteps;
+        if (
+            recordedSteps === undefined ||
+            recordedSteps === "" ||
+            recordedSteps === "[]"
+        ) {
+            const descriptionResponse =
+                await agent.getDetailedStepsFromDescription(
+                    action.parameters.recordedActionName,
+                    action.parameters.recordedActionDescription,
+                    action.parameters.fragments,
+                    "",
+                );
+            if (descriptionResponse.success) {
+                console.log(descriptionResponse.data);
+                recordedSteps = JSON.stringify(
+                    (descriptionResponse.data as any).actions,
+                );
+            }
+        }
+
         const timerName = `Getting intent schema`;
         console.time(timerName);
         const intentResponse = await agent.getIntentSchemaFromRecording(
             action.parameters.recordedActionName,
+            action.parameters.existingActionNames,
             action.parameters.recordedActionDescription,
-            action.parameters.recordedActionSteps,
-            action.parameters.htmlFragments,
+            recordedSteps,
+            action.parameters.fragments,
             // action.parameters.screenshot,
             "",
         );
@@ -338,21 +497,22 @@ export async function handleSchemaDiscoveryAction(
 
         console.timeEnd(timerName);
 
-        const intentSchema = await getIntentSchemaFromJSON(
-            intentResponse.data as UserIntent,
+        const intentData = intentResponse.data as UserIntent;
+        const { actionSchema, typeDefinition } = await getIntentSchemaFromJSON(
+            intentData,
             action.parameters.recordedActionDescription,
         );
 
-        message = "Intent schema: \n" + intentSchema;
+        message = "Intent schema: \n" + actionSchema;
 
         const timerName2 = `Getting action schema`;
         console.time(timerName2);
         const stepsResponse = await agent.getActionStepsSchemaFromRecording(
-            action.parameters.recordedActionName,
+            intentData.actionName,
             action.parameters.recordedActionDescription,
             intentResponse.data,
-            action.parameters.recordedActionSteps,
-            action.parameters.htmlFragments,
+            recordedSteps,
+            action.parameters.fragments,
             // action.parameters.screenshot,
             "",
         );
@@ -369,13 +529,12 @@ export async function handleSchemaDiscoveryAction(
         console.timeEnd(timerName2);
 
         return {
-            intent: intentSchema,
+            intent: actionSchema,
             intentJson: intentResponse.data,
+            intentTypeDefinition: typeDefinition,
             actions: stepsResponse.data,
         };
     }
-
-    //
 
     return {
         displayText: message,

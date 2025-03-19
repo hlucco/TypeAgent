@@ -1,16 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { ProgressBar } from "interactive-app";
 import * as knowLib from "knowledge-processor";
 import * as kp from "knowpro";
+import { ChatPrinter } from "../chatPrinter.js";
 
 export function textLocationToString(location: kp.TextLocation): string {
-    let text = `MessageIndex: ${location.messageIndex}`;
-    if (location.chunkIndex) {
-        text += `\nChunkIndex: ${location.chunkIndex}`;
+    let text = `MessageOrdinal: ${location.messageOrdinal}`;
+    if (location.chunkOrdinal) {
+        text += `\nChunkOrdinal: ${location.chunkOrdinal}`;
     }
-    if (location.charIndex) {
-        text += `\nCharIndex: ${location.charIndex}`;
+    if (location.charOrdinal) {
+        text += `\nCharOrdinal: ${location.charOrdinal}`;
     }
     return text;
 }
@@ -33,7 +35,7 @@ export async function matchFilterToConversation(
     }
     let when: kp.WhenFilter = termFilterToWhenFilter(filter);
     when.knowledgeType = knowledgeType;
-    let searchResults = await kp.searchConversation(
+    let searchResults = await kp.searchConversationKnowledge(
         conversation,
         termGroup,
         when,
@@ -42,7 +44,7 @@ export async function matchFilterToConversation(
     if (useAnd && (!searchResults || searchResults.size === 0)) {
         // Try again with OR
         termGroup = termFilterToSearchGroup(filter, false);
-        searchResults = await kp.searchConversation(
+        searchResults = await kp.searchConversationKnowledge(
             conversation,
             termGroup,
             when,
@@ -108,4 +110,49 @@ export function actionFilterToSearchGroup(
         searchTermGroup.terms.push(kp.createSearchTerm(action.object));
     }
     return searchTermGroup;
+}
+
+export interface IMessageMetadata<TMeta = any> {
+    metadata: TMeta;
+}
+export function createIndexingEventHandler(
+    printer: ChatPrinter,
+    progress: ProgressBar,
+    maxMessages: number,
+): kp.IndexingEventHandlers {
+    let startedKnowledge = false;
+    let startedRelated = false;
+    let startedMessages = false;
+    return {
+        onKnowledgeExtracted() {
+            if (!startedKnowledge) {
+                printer.writeLine("Indexing knowledge");
+                startedKnowledge = true;
+            }
+            progress.advance();
+            return progress.count < maxMessages;
+        },
+        onEmbeddingsCreated(sourceTexts, batch, batchStartAt) {
+            if (!startedRelated) {
+                progress.reset(sourceTexts.length);
+                printer.writeLine(
+                    `Indexing ${sourceTexts.length} related terms`,
+                );
+                startedRelated = true;
+            }
+            progress.advance(batch.length);
+            return true;
+        },
+        onTextIndexed(textAndLocations, batch, batchStartAt) {
+            if (!startedMessages) {
+                progress.reset(textAndLocations.length);
+                printer.writeLine(
+                    `Indexing ${textAndLocations.length} messages`,
+                );
+                startedMessages = true;
+            }
+            progress.advance(batch.length);
+            return true;
+        },
+    };
 }

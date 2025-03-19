@@ -3,6 +3,7 @@
 
 export * from "./interfaces.js";
 export * from "./import.js";
+export * from "./conversation.js";
 export * from "./conversationIndex.js";
 export * from "./secondaryIndexes.js";
 export * from "./relatedTermsIndex.js";
@@ -13,5 +14,6 @@ export * from "./propertyIndex.js";
 export * from "./timestampIndex.js";
 export * from "./serialization.js";
 export * from "./dateTimeSchema.js";
-export * from "./searchSchema.js";
-export * from "./searchTranslator.js";
+export * from "./searchQueryTranslator.js";
+export * from "./textLocationIndex.js";
+export * from "./messageIndex.js";
