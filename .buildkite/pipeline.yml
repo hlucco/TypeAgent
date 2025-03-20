@@ -1,0 +1,32 @@
+steps:
+  - label: build-push-ECR
+    branches: "*"
+    command:
+      - export VERSION=$$(git rev-parse HEAD)
+      - export ECR_HOST=460210468233.dkr.ecr.us-east-1.amazonaws.com
+      - export REPO_NAME=infrastructure/marmite
+      - export CACHE_TAG=buildkite-buildcache
+      - export IMAGE_DEST=$${ECR_HOST}/$${REPO_NAME}:$${VERSION}
+      - export CACHE_FROM=$${ECR_HOST}/$${REPO_NAME}:$${CACHE_TAG}
+      - export ANNOTATION_BUILD_DESC="Image Build"
+      - export ANNOTATION_MSG="$${ANNOTATION_BUILD_DESC} to $${IMAGE_DEST} with cache $${CACHE_FROM}"
+      - echo "START $${ANNOTATION_MSG}"
+      - buildkite-agent annotate --style "info" "$${ANNOTATION_MSG}"
+      - echo
+      - echo docker BUILD -t $${REPO_NAME} ./ts
+      - docker build -t $${REPO_NAME} ./ts
+      - echo
+      - echo docker TAG $${REPO_NAME} $${IMAGE_DEST}
+      - docker tag $${REPO_NAME} $${IMAGE_DEST}
+      - echo
+      - echo docker PUSH $${IMAGE_DEST}
+      - docker push $${IMAGE_DEST}
+      - echo
+      - echo "COMPLETE $${ANNOTATION_MSG}"
+    timeout_in_minutes: 15
+    plugins:
+      - ecr#89b335a:
+          login: true
+          region: "us-east-1"
+          account-ids:
+            - 460210468233
