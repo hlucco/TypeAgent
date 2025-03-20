@@ -2,6 +2,7 @@ FROM node:20 AS base
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+
 RUN npm install -g corepack@latest
 RUN corepack enable pnpm
 RUN corepack install -g pnpm@latest
@@ -18,7 +19,6 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     ca-certificates \
-    procps \
     libxss1 \
     libgconf-2-4 \
     libatk1.0-0 \
@@ -36,12 +36,17 @@ RUN apt-get update && apt-get install -y \
     libxcomposite1 \
     libxdamage1 \
     libxrandr2 \
-    xdg-utils
+    xdg-utils \
+    libsecret-1-0 \
+    libsecret-1-dev
+
+# Some systems don't recognize procps as a package
+RUN apt-get update && apt-get install -y procps
 
 # Install Chrome for Puppeteer
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get install -y ./google-chrome-stable_current_amd64.deb \
-    && rm google-chrome-stable_current_amd64.deb
+# RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+#     && apt-get install -y ./google-chrome-stable_current_amd64.deb \
+#     && rm google-chrome-stable_current_amd64.deb
 
 # base only image
 FROM base AS build
@@ -49,8 +54,8 @@ COPY ./ /usr/src/app
 WORKDIR /usr/src/app
 RUN pnpm install --frozen-lockfile
 RUN pnpm run -r build
-RUN pnpm deploy --legacy --filter=agent-api --prod /prod/api
-RUN pnpm deploy --legacy --filter=tools-scripts --prod /prod/tools
+RUN pnpm deploy --filter=agent-api --prod /prod/api
+RUN pnpm deploy --filter=tools-scripts --prod /prod/tools
 
 # image with api and tool bits only 
 FROM base AS api
@@ -60,6 +65,13 @@ COPY --from=build /prod/tools/ /prod/tools/
 # rendering bits
 COPY --from=build /usr/src/app/packages/shell/out/ /prod/shell/out/
 WORKDIR /prod/api
+
+COPY .env /prod/api
+
+# dependencies
+RUN apt-get update
+# RUN apt install -y gnome-keyring
+# RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
 ######################################### BLOB STORAGE MOUNT ######################################### 
 ## blobfuse - https://github.com/Azure/azure-storage-fuse/tree/main
@@ -81,13 +93,13 @@ EXPOSE 80:3000
 
 # start actions
 # az login
-RUN echo az login --identity >> start.sh
+# RUN echo az login --identity >> start.sh
 ## mount blob storage locally
 #RUN echo blobfuse2 mount /mnt/blob --config-file=mount-blobfuse.yaml >> start.sh
 # run getKeys
-RUN echo node ../tools/scripts/getKeys.mjs >> start.sh
+# RUN echo node ../tools/scripts/getKeys.mjs >> start.sh
 # start API server
 RUN echo pnpm start >> start.sh
 
 # run start script
-CMD ["bash", "start.sh"]
+CMD bash start.sh
