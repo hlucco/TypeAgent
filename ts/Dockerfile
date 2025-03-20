@@ -66,7 +66,7 @@ COPY --from=build /prod/tools/ /prod/tools/
 COPY --from=build /usr/src/app/packages/shell/out/ /prod/shell/out/
 WORKDIR /prod/api
 
-COPY .env /prod/api
+# COPY .env /prod/api
 
 # dependencies
 RUN apt-get update
