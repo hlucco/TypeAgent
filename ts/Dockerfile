@@ -91,6 +91,7 @@ RUN apt-get update
 
 EXPOSE 80:3000
 
+
 # start actions
 # az login
 # RUN echo az login --identity >> start.sh
