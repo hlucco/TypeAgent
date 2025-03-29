@@ -17,7 +17,14 @@ interface TableRow {
 }
 
 export async function createSqliteDb(): Promise<ISqliteDB> {
-    const db = new Database("/users/henry.lucco/typeagent.db");
+    try {
+      new Database("./typeagent.db");
+    } catch (err) {
+      console.error("Error creating database:", err);
+      throw err;
+    }
+
+    const db = new Database("./typeagent.db");
 
     return {
       query,

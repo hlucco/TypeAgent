@@ -1,7 +1,23 @@
 {
   "agents": {
+    "greeting": {
+      "name": "greeting-agent",
+      "execMode": "dispatcher"
+    },
     "highspotConversation": {
-      "name": "highspot-conversation-agent"
+      "name": "highspot-conversation-agent",
+      "execMode": "dispatcher"
+    },
+    "highspotContent" : {
+      "name": "highspot-content-agent",
+      "execMode": "dispatcher"
+    },
+    "list": {
+      "name": "list-agent"
+    },
+    "chat": {
+      "name": "chat-agent",
+      "execMode": "dispatcher"
     }
   },
   "explainers": {
