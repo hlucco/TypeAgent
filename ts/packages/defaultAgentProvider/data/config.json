@@ -8,10 +8,6 @@
       "name": "highspot-conversation-agent",
       "execMode": "dispatcher"
     },
-    "highspotContent" : {
-      "name": "highspot-content-agent",
-      "execMode": "dispatcher"
-    },
     "list": {
       "name": "list-agent"
     },
