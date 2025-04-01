@@ -4,7 +4,6 @@
 import { collections, createTopNList } from "typeagent";
 import {
     IMessage,
-    IReadonlyCollection,
     Knowledge,
     KnowledgeType,
     MessageOrdinal,
@@ -117,8 +116,10 @@ export class MatchAccumulator<T = any> {
         }
     }
 
-    public addUnion(other: MatchAccumulator) {
-        for (const otherMatch of other.getMatches()) {
+    public addUnion(other: MatchAccumulator | IterableIterator<Match>) {
+        const otherMatches =
+            other instanceof MatchAccumulator ? other.getMatches() : other;
+        for (const otherMatch of otherMatches) {
             const existingMatch = this.getMatch(otherMatch.value);
             if (existingMatch) {
                 this.combineMatches(existingMatch, otherMatch);
@@ -435,11 +436,26 @@ export class SemanticRefAccumulator extends MatchAccumulator<SemanticRefOrdinal>
         return accumulator;
     }
 
+    public override addUnion(other: SemanticRefAccumulator): void {
+        super.addUnion(other);
+        addToSet(this.searchTermMatches, other.searchTermMatches.values());
+    }
+
     public override intersect(
         other: SemanticRefAccumulator,
     ): SemanticRefAccumulator {
         const intersection = new SemanticRefAccumulator();
         super.intersect(other, intersection);
+        if (intersection.size > 0) {
+            addToSet(
+                intersection.searchTermMatches,
+                this.searchTermMatches.values(),
+            );
+            addToSet(
+                intersection.searchTermMatches,
+                other.searchTermMatches.values(),
+            );
+        }
         return intersection;
     }
 
@@ -451,11 +467,12 @@ export class SemanticRefAccumulator extends MatchAccumulator<SemanticRefOrdinal>
             };
         }, 0);
     }
-
+    /*
     public override clearMatches() {
         super.clearMatches();
         this.searchTermMatches.clear();
     }
+    */
 }
 
 export class MessageAccumulator extends MatchAccumulator<MessageOrdinal> {
@@ -512,6 +529,12 @@ export class MessageAccumulator extends MatchAccumulator<MessageOrdinal> {
         } else {
             this.add(messageOrdinalStart, score);
         }
+    }
+
+    public override intersect(other: MessageAccumulator): MessageAccumulator {
+        const intersection = new MessageAccumulator();
+        super.intersect(other, intersection);
+        return intersection;
     }
 
     public smoothScores() {
@@ -795,56 +818,8 @@ function* union<T>(
     }
 }
 
-export interface ICollection<T, TOrdinal>
-    extends IReadonlyCollection<T, TOrdinal> {
-    push(...items: T[]): void;
-}
-
-export class Collection<T, TOrdinal extends number>
-    implements ICollection<T, TOrdinal>
-{
-    protected items: T[];
-
-    constructor(items?: T[] | undefined) {
-        this.items = items ?? [];
-    }
-
-    public get length(): number {
-        return this.items.length;
-    }
-
-    public get(ordinal: TOrdinal): T | undefined {
-        return this.items[ordinal];
-    }
-
-    public getMultiple(ordinals: TOrdinal[]): (T | undefined)[] {
-        const items = new Array<T | undefined>(ordinals.length);
-        for (let i = 0; i < ordinals.length; ++i) {
-            items[i] = this.get(ordinals[i]);
-        }
-        return items;
-    }
-
-    public getAll(): T[] {
-        return this.items;
-    }
-
-    public push(...items: T[]): void {
-        for (const item of items) {
-            this.items.push(item);
-        }
-    }
-
-    public *[Symbol.iterator](): Iterator<T, any, any> {
-        return this.items[Symbol.iterator]();
+function addToSet<T = any>(set: Set<T>, values: Iterable<T>) {
+    for (const value of values) {
+        set.add(value);
     }
 }
-
-export class MessageCollection<
-    TMessage extends IMessage = IMessage,
-> extends Collection<TMessage, MessageOrdinal> {}
-
-export class SemanticRefCollection extends Collection<
-    SemanticRef,
-    SemanticRefOrdinal
-> {}

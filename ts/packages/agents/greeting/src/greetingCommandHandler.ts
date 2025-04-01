@@ -27,11 +27,55 @@ import {
     PersonalizedGreetingAction,
 } from "./greetingActionSchema.js";
 import { conversation as Conversation } from "knowledge-processor";
+import { exec } from "child_process";
 
 export function instantiate(): AppAgent {
     return {
+        initializeAgentContext: initializeGreetingAgentContext,
         ...getCommandInterface(handlers),
     };
+}
+
+type GreetingAgentContext = {
+    getUserNameResolve?: (value: any) => void | undefined;
+    userPromise?: Promise<any> | undefined;
+    user: {
+        givenName: string | undefined;
+        surName: string | undefined;
+    };
+};
+
+async function initializeGreetingAgentContext(): Promise<GreetingAgentContext> {
+    let context: GreetingAgentContext = {
+        user: {
+            givenName: undefined,
+            surName: undefined,
+        },
+    };
+
+    // promise that is resolved when executable returns
+    context.userPromise = new Promise<GreetingAgentContext>((resolve) => {
+        context.getUserNameResolve = resolve;
+    });
+
+    // non blocking execution call
+    exec(
+        "az ad signed-in-user show",
+        { timeout: 15000 },
+        (_error, stdout, _stderr) => {
+            try {
+                const user = JSON.parse(stdout.toString());
+
+                context.user.givenName = user.givenName;
+                context.user.surName = user.surname;
+                if (context.getUserNameResolve) {
+                    context.getUserNameResolve(user);
+                }
+            } catch {}
+        },
+    );
+
+    return context;
 }
 
 const personalizedGreetingSchema = `
@@ -57,6 +101,7 @@ export interface PersonalizedGreetingAction {
 
 // A typical greeting
 // Greetings can include some color commentary and or an initiator like "Wow, you're up late" or "I'm glad it's Friday"
+// Sometimes be playful with the user's name (i.e. if greeting with Hola, you can call the user Juan instead of John)
 export interface GenericGreeting {
     // The greeting response to the user such as "Top of the morning to ya!" or "Hey, how's it going?" or "What a nice day we're having, what's up!?" or "What are we going to do today?"
     // Be sure to make the greeting relevant to time of day (i.e. don't say good morning in the afternoon).
@@ -79,9 +124,15 @@ export class GreetingCommandHandler implements CommandHandlerNoParams {
      *
      * @param context The command context.
      */
-    public async run(context: ActionContext) {
+    public async run(context: ActionContext<GreetingAgentContext>) {
         // Initial output to let the user know the agent is thinking...
         displayStatus("...", context);
+
+        // wait until we have the user's name
+        if (context.sessionContext.agentContext.userPromise) {
+            await context.sessionContext.agentContext.userPromise;
+            context.sessionContext.agentContext.userPromise = undefined;
+        }
 
         const response = await this.getTypeChatResponse(context);
 
@@ -147,7 +198,7 @@ export class GreetingCommandHandler implements CommandHandlerNoParams {
     }
 
     async getTypeChatResponse(
-        context: ActionContext,
+        context: ActionContext<GreetingAgentContext>,
     ): Promise<Result<GreetingAction>> {
         // Create Model instance
         let chatModel = this.createModel(true);
@@ -169,11 +220,20 @@ export class GreetingCommandHandler implements CommandHandlerNoParams {
         );
 
         // get chat history
+        const days = [
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+        ];
         const history = await getRecentChatHistory(context);
         history.push("Hi!");
         history.push("###");
         history.push(
-            `Current Date is ${new Date().toLocaleDateString("en-US")}. The time is ${new Date().toLocaleTimeString()}.`,
+            `Current Date is ${new Date().toLocaleDateString("en-US")}. The time is ${new Date().toLocaleTimeString()}. It is ${days[new Date().getDay()]}`,
         );
 
         // make the request
@@ -194,7 +254,7 @@ const handlers: CommandHandlerTable = {
 
 async function handlePersonalizedGreetingAction(
     greetingAction: PersonalizedGreetingAction,
-    context: ActionContext,
+    context: ActionContext<GreetingAgentContext>,
 ): Promise<ActionResult> {
     let result = createActionResult("Hi!");
     if (greetingAction.parameters !== undefined) {
@@ -269,7 +329,9 @@ async function handlePersonalizedGreetingAction(
 //     return answer?.generatedText;
 // }
 
-async function getRecentChatHistory(context: ActionContext): Promise<string[]> {
+async function getRecentChatHistory(
+    context: ActionContext<GreetingAgentContext>,
+): Promise<string[]> {
     const conversationManager: Conversation.ConversationManager = (
         context.sessionContext as any
     ).conversationManager;
@@ -308,6 +370,24 @@ async function getRecentChatHistory(context: ActionContext): Promise<string[]> {
             searchResponse.response?.messages?.map((msg) => {
                 chatHistory.push(`- \"${msg.value.value}\"`);
             });
+
+            chatHistory.push("###");
+            if (
+                context.sessionContext.agentContext.user.givenName &&
+                context.sessionContext.agentContext.user.givenName.length > 0
+            ) {
+                chatHistory.push(
+                    `The user's given name is '${context.sessionContext.agentContext.user.givenName}'.`,
+                );
+            }
+            if (
+                context.sessionContext.agentContext.user.surName &&
+                context.sessionContext.agentContext.user.surName.length > 0
+            ) {
+                chatHistory.push(
+                    `The user's sur name is '${context.sessionContext.agentContext.user.surName}'.`,
+                );
+            }
 
             const matches =
                 await conversationManager.generateAnswerForSearchResponse(
